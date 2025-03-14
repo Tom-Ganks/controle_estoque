@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/produto_model.dart';
+import '../../models/usuario_model.dart'; // Import the Usuario model
 import '../../repositories/produto_repositorie.dart';
 import '../../widgets/animated_card.dart';
 import '../../widgets/confirmation_dialog.dart';
@@ -7,7 +8,12 @@ import '../../widgets/summary_card.dart';
 import 'login_page.dart';
 
 class DashboardPage extends StatefulWidget {
-  const DashboardPage({super.key});
+  final Usuario currentUser; // Add currentUser parameter
+
+  const DashboardPage({
+    super.key,
+    required this.currentUser, // Make currentUser required
+  });
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
@@ -197,17 +203,43 @@ class _DashboardPageState extends State<DashboardPage> {
                               label: 'Staff',
                               color: Colors.red,
                               onTap: () {
-                                Navigator.pushNamed(context, '/usuarios')
-                                    .then((_) => _refreshData());
+                                if (widget.currentUser.status == 'admin') {
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/usuarios',
+                                    arguments: widget.currentUser,
+                                  ).then((_) => _refreshData());
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                          'Acesso restrito a administradores.'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
                               },
                             ),
                             AnimatedActionCard(
-                              icon: Icons.people,
-                              label: 'Solicitações',
+                              icon: Icons.notifications,
+                              label: 'Notificações',
                               color: Colors.purple,
                               onTap: () {
-                                Navigator.pushNamed(context, '/solicitacoes')
-                                    .then((_) => _refreshData());
+                                if (widget.currentUser.status == 'admin') {
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/notificacoes',
+                                    arguments: widget.currentUser,
+                                  ).then((_) => _refreshData());
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                          'Acesso restrito a administradores.'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
                               },
                             ),
                           ],

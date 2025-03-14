@@ -36,7 +36,7 @@ class UsuarioViewModel {
     }
   }
 
-  Future<bool> loginUser(String email, String senha) async {
+  Future<Usuario?> loginUser(String email, String senha) async {
     try {
       await fetchAllUsuarios(); // Ensure we have the latest user list
 
@@ -46,11 +46,10 @@ class UsuarioViewModel {
         orElse: () => throw Exception('User not found'),
       );
 
-      // If we found a user, login was successful
-      // ignore: unnecessary_null_comparison
-      return user != null;
+      // Return the logged-in user
+      return user;
     } catch (e) {
-      return false;
+      return null; // Return null if login fails
     }
   }
 }

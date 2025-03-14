@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Import for TextInputFormatter
 import 'package:image_picker/image_picker.dart';
 
 import '../../models/usuario_model.dart';
@@ -21,6 +22,8 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController cargoController = TextEditingController();
   final TextEditingController senhaController = TextEditingController();
   final TextEditingController confirmasenhaController = TextEditingController();
+  final TextEditingController cpfController =
+      TextEditingController(); // Add CPF controller
 
   File? _foto;
   final _formKey = GlobalKey<FormState>();
@@ -46,8 +49,9 @@ class _RegisterPageState extends State<RegisterPage> {
         cargo: cargoController.text,
         senha: senhaController.text,
         foto: _foto?.path,
+        cpf: cpfController.text, // Add CPF to the Usuario model
         // Adicionando o campo de nível de acesso
-        status: cargoController.text.toLowerCase() == 'administrador'
+        status: cargoController.text.toLowerCase() == 'administração'
             ? 'admin'
             : 'user',
       );
@@ -166,6 +170,26 @@ class _RegisterPageState extends State<RegisterPage> {
                           label: 'Telefone',
                           icon: Icons.phone,
                           keyboardType: TextInputType.phone,
+                          inputFormatters: [
+                            FilteringTextInputFormatter
+                                .digitsOnly, // Allow only digits
+                            LengthLimitingTextInputFormatter(
+                                11), // Limit to 11 digits
+                            _TelefoneInputFormatter(), // Custom formatter for phone number
+                          ],
+                        ),
+                        _buildTextField(
+                          controller: cpfController, // Add CPF field
+                          label: 'CPF',
+                          icon: Icons.credit_card,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter
+                                .digitsOnly, // Allow only digits
+                            LengthLimitingTextInputFormatter(
+                                11), // Limit to 11 digits
+                            _CpfInputFormatter(), // Custom formatter for CPF
+                          ],
                         ),
                         _buildTextField(
                           controller: enderecoController,
@@ -290,6 +314,7 @@ class _RegisterPageState extends State<RegisterPage> {
     TextInputType keyboardType = TextInputType.text,
     bool obscureText = false,
     String? Function(String?)? validator,
+    List<TextInputFormatter>? inputFormatters, // Add inputFormatters parameter
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -297,6 +322,7 @@ class _RegisterPageState extends State<RegisterPage> {
         controller: controller,
         keyboardType: keyboardType,
         obscureText: obscureText,
+        inputFormatters: inputFormatters, // Pass inputFormatters
         decoration: InputDecoration(
           labelText: label,
           prefixIcon: Icon(icon, color: Colors.blue),
@@ -323,6 +349,70 @@ class _RegisterPageState extends State<RegisterPage> {
               return null;
             },
       ),
+    );
+  }
+}
+
+// Custom formatter for phone number
+class _TelefoneInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final text =
+        newValue.text.replaceAll(RegExp(r'[^0-9]'), ''); // Remove non-digits
+    if (text.length > 11) return oldValue; // Limit to 11 digits
+
+    String formattedText = '';
+    if (text.length >= 2) {
+      formattedText += '(${text.substring(0, 2)})'; // Add DDD in parentheses
+    }
+    if (text.length > 2) {
+      formattedText += ' ${text.substring(2, 7)}'; // Add first 5 digits
+    }
+    if (text.length > 7) {
+      formattedText += '-${text.substring(7)}'; // Add hyphen and last 4 digits
+    }
+
+    return TextEditingValue(
+      text: formattedText,
+      selection: TextSelection.collapsed(offset: formattedText.length),
+    );
+  }
+}
+
+// Custom formatter for CPF
+class _CpfInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final text =
+        newValue.text.replaceAll(RegExp(r'[^0-9]'), ''); // Remove non-digits
+    if (text.length > 11) return oldValue; // Limit to 11 digits
+
+    String formattedText = '';
+    if (text.length >= 3) {
+      formattedText +=
+          '${text.substring(0, 3)}.'; // Add first 3 digits and a dot
+    }
+    if (text.length >= 6) {
+      formattedText +=
+          '${text.substring(3, 6)}.'; // Add next 3 digits and a dot
+    }
+    if (text.length >= 9) {
+      formattedText +=
+          '${text.substring(6, 9)}-'; // Add next 3 digits and a hyphen
+    }
+    if (text.length >= 11) {
+      formattedText += text.substring(9); // Add last 2 digits
+    }
+
+    return TextEditingValue(
+      text: formattedText,
+      selection: TextSelection.collapsed(offset: formattedText.length),
     );
   }
 }

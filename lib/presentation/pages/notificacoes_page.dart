@@ -1,10 +1,11 @@
+import 'package:controle_estoque/models/usuario_model.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../models/notificacoes_model.dart';
 import '../../repositories/notificacao_repository.dart';
 
 class NotificacoesPage extends StatefulWidget {
-  const NotificacoesPage({super.key});
+  const NotificacoesPage({super.key, required Usuario currentUser});
 
   @override
   State<NotificacoesPage> createState() => _NotificacoesPageState();

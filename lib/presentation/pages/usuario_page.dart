@@ -6,7 +6,12 @@ import 'dashboard.dart';
 import 'usuario_detail.dart';
 
 class UsuarioPage extends StatefulWidget {
-  const UsuarioPage({super.key});
+  final Usuario currentUser; // Add currentUser parameter
+
+  const UsuarioPage({
+    super.key,
+    required this.currentUser, // Make currentUser required
+  });
 
   @override
   State<UsuarioPage> createState() => _UsuarioPageState();
@@ -77,7 +82,9 @@ class _UsuarioPageState extends State<UsuarioPage> {
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => const DashboardPage()),
+                              builder: (context) => DashboardPage(
+                                    currentUser: widget.currentUser,
+                                  )),
                         );
                       },
                     ),
@@ -196,15 +203,15 @@ class _UsuarioPageState extends State<UsuarioPage> {
                                           ),
                                         ),
                                         ...[
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          usuario.cargo,
-                                          style: TextStyle(
-                                            color: Colors.blue[700],
-                                            fontWeight: FontWeight.w500,
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            usuario.cargo,
+                                            style: TextStyle(
+                                              color: Colors.blue[700],
+                                              fontWeight: FontWeight.w500,
+                                            ),
                                           ),
-                                        ),
-                                      ],
+                                        ],
                                       ],
                                     ),
                                     trailing: Container(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../viewmodels/usuario_viewmodel.dart';
+import '../../models/usuario_model.dart'; // Import the Usuario model
 import 'dashboard.dart';
 import 'register_page.dart';
 
@@ -20,15 +21,23 @@ class _LoginPageState extends State<LoginPage> {
     if (_formKey.currentState?.validate() ?? false) {
       final usuario = usuarioController.text;
       final senha = senhaController.text;
-      final loginSuccess = await usuarioViewModel.loginUser(usuario, senha);
+
+      // Call the login method and get the logged-in user
+      final Usuario? loggedInUser =
+          await usuarioViewModel.loginUser(usuario, senha);
 
       if (mounted) {
-        if (loginSuccess) {
+        if (loggedInUser != null) {
+          // If login is successful, navigate to DashboardPage with the logged-in user
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const DashboardPage()),
+            MaterialPageRoute(
+              builder: (context) => DashboardPage(
+                  currentUser: loggedInUser), // Pass the logged-in user
+            ),
           );
         } else {
+          // If login fails, show an error message
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Usuário ou senha incorretos.')),
           );

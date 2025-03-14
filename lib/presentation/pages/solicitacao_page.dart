@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
+import '../../core/database_helper.dart';
 import '../../models/produto_model.dart';
+import '../../models/usuario_model.dart';
+import '../../models/notificacoes_model.dart';
 import '../../repositories/produto_repositorie.dart';
 import 'dashboard.dart';
 
 class SolicitacaoPage extends StatefulWidget {
-  const SolicitacaoPage({super.key});
+  final Usuario currentUser;
+
+  const SolicitacaoPage({
+    super.key,
+    required this.currentUser,
+  });
 
   @override
   State<SolicitacaoPage> createState() => _SolicitacaoPageState();
@@ -13,6 +21,7 @@ class SolicitacaoPage extends StatefulWidget {
 class _SolicitacaoPageState extends State<SolicitacaoPage> {
   List<Produto> produtos = [];
   String searchQuery = "";
+  final DatabaseHelper _databaseHelper = DatabaseHelper();
 
   @override
   void initState() {
@@ -126,25 +135,46 @@ class _SolicitacaoPageState extends State<SolicitacaoPage> {
     );
 
     if (quantidade != null) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.check_circle, color: Colors.white),
-              const SizedBox(width: 8),
-              Text(
-                'Solicitação de $quantidade unidades de ${produto.nome} enviada.',
-              ),
-            ],
-          ),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
+      // Create and save notification
+      final notificacao = Notificacao(
+        solicitanteNome: widget.currentUser.nome,
+        solicitanteCargo: widget.currentUser.cargo,
+        produtoNome: produto.nome,
+        quantidade: quantidade,
+        dataSolicitacao: DateTime.now(),
       );
+
+      try {
+        await _databaseHelper.insertNotificacao(notificacao);
+
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 8),
+                Text(
+                  'Solicitação de $quantidade unidades de ${produto.nome} enviada.',
+                ),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao enviar solicitação: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -172,7 +202,9 @@ class _SolicitacaoPageState extends State<SolicitacaoPage> {
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const DashboardPage(),
+                            builder: (context) => DashboardPage(
+                              currentUser: widget.currentUser,
+                            ),
                           ),
                         );
                       },
@@ -188,7 +220,7 @@ class _SolicitacaoPageState extends State<SolicitacaoPage> {
                         textAlign: TextAlign.center,
                       ),
                     ),
-                    const SizedBox(width: 48), // Para balancear o layout
+                    const SizedBox(width: 48),
                   ],
                 ),
               ),

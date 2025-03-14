@@ -1,8 +1,9 @@
 import 'package:sqflite/sqflite.dart';
+import '../core/database_helper.dart';
 import '../models/notificacoes_model.dart';
 
 class NotificacaoRepository {
-  Future<Database> get database async => await DatabaseProvider.database;
+  Future<Database> get database async => await DatabaseHelper().database;
 
   Future<void> createTable(Database db) async {
     await db.execute('''

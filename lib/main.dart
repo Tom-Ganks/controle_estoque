@@ -7,6 +7,7 @@ import 'presentation/pages/produto_page.dart';
 import 'presentation/pages/register_page.dart';
 import 'presentation/pages/solicitacao_page.dart';
 import 'presentation/pages/usuario_page.dart';
+import 'models/usuario_model.dart'; // Make sure to import Usuario model
 
 void main() async {
   // Inicialize o FFI para o SQLite
@@ -22,21 +23,46 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Controle de Estoque',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const LoginPage(),
-        '/dashboard': (context) => const DashboardPage(),
-        '/solicitacoes': (context) => const SolicitacaoPage(),
-        '/usuarios': (context) => const UsuarioPage(),
-        '/registro': (context) => const RegisterPage(),
-        '/produtos': (context) => const ProdutoPage(),
-        '/notificacoes': (context) => const NotificacoesPage(),
-      },
-    );
+        title: 'Controle de Estoque',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+        ),
+        initialRoute: '/',
+        onGenerateRoute: (settings) {
+          switch (settings.name) {
+            case '/':
+              return MaterialPageRoute(builder: (context) => const LoginPage());
+            case '/dashboard':
+              final Usuario currentUser = settings.arguments as Usuario;
+              return MaterialPageRoute(
+                builder: (context) => DashboardPage(currentUser: currentUser),
+              );
+            case '/solicitacoes':
+              final Usuario currentUser = settings.arguments as Usuario;
+              return MaterialPageRoute(
+                builder: (context) => SolicitacaoPage(currentUser: currentUser),
+              );
+            case '/usuarios':
+              final Usuario currentUser = settings.arguments as Usuario;
+              return MaterialPageRoute(
+                builder: (context) => UsuarioPage(currentUser: currentUser),
+              );
+            case '/notificacoes':
+              final Usuario currentUser = settings.arguments as Usuario;
+              return MaterialPageRoute(
+                builder: (context) =>
+                    NotificacoesPage(currentUser: currentUser),
+              );
+            case '/registro':
+              return MaterialPageRoute(
+                  builder: (context) => const RegisterPage());
+            case '/produtos':
+              return MaterialPageRoute(
+                  builder: (context) => const ProdutoPage());
+            default:
+              return MaterialPageRoute(builder: (context) => const LoginPage());
+          }
+        });
   }
 }
