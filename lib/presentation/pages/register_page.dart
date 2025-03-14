@@ -172,10 +172,48 @@ class _RegisterPageState extends State<RegisterPage> {
                           label: 'Endereço',
                           icon: Icons.location_on,
                         ),
-                        _buildTextField(
-                          controller: cargoController,
-                          label: 'Cargo',
-                          icon: Icons.work,
+                        DropdownButtonFormField<String>(
+                          value: cargoController.text.isEmpty
+                              ? null
+                              : cargoController.text,
+                          decoration: InputDecoration(
+                            labelText: 'Cargo',
+                            prefixIcon:
+                                const Icon(Icons.work, color: Colors.blue),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.grey[300]!),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.grey[300]!),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                  color: Colors.blue, width: 2),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[50],
+                          ),
+                          items: const [
+                            DropdownMenuItem(
+                                value: 'Administração',
+                                child: Text('Administração')),
+                            DropdownMenuItem(
+                                value: 'Staff', child: Text('Staff')),
+                          ],
+                          onChanged: (value) {
+                            if (value != null) {
+                              cargoController.text = value;
+                            }
+                          },
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Por favor, selecione um cargo';
+                            }
+                            return null;
+                          },
                         ),
                         _buildTextField(
                           controller: senhaController,

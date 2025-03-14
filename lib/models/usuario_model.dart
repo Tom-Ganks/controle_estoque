@@ -10,7 +10,6 @@ class Usuario {
   String status; // 'admin' ou 'user'
   String? setor; // Novo campo
   String? cpf; // Novo campo
-  String? rg; // Novo campo
   String? dataNascimento; // Novo campo
   String? cargaHoraria; // Novo campo
 
@@ -26,7 +25,6 @@ class Usuario {
     required this.status,
     this.setor,
     this.cpf,
-    this.rg,
     this.dataNascimento,
     this.cargaHoraria, // Novo campo
   });
@@ -44,7 +42,6 @@ class Usuario {
       'status': status,
       'setor': setor, // Novo campo
       'cpf': cpf, // Novo campo
-      'rg': rg, // Novo campo
       'dataNascimento': dataNascimento, // Novo campo
       'cargaHoraria': cargaHoraria, // Novo campo
     };
@@ -63,7 +60,6 @@ class Usuario {
       status: map['status'],
       setor: map['setor'], // Novo campo
       cpf: map['cpf'], // Novo campo
-      rg: map['rg'], // Novo campo
       dataNascimento: map['dataNascimento'], // Novo campo
       cargaHoraria: map['cargaHoraria'], // Novo campo
     );

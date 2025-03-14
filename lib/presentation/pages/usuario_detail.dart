@@ -24,7 +24,6 @@ class _UsuarioDetailPageState extends State<UsuarioDetailPage> {
   late TextEditingController _setorController;
   late TextEditingController _statusController;
   late TextEditingController _cpfController;
-  late TextEditingController _rgController;
   late TextEditingController _dataNascimentoController;
   late TextEditingController _cargaHorariaController;
 
@@ -43,7 +42,6 @@ class _UsuarioDetailPageState extends State<UsuarioDetailPage> {
     _setorController = TextEditingController(text: widget.usuario.setor);
     _statusController = TextEditingController(text: widget.usuario.status);
     _cpfController = TextEditingController(text: widget.usuario.cpf);
-    _rgController = TextEditingController(text: widget.usuario.rg);
     _dataNascimentoController = TextEditingController(
       text: widget.usuario.dataNascimento,
     );
@@ -62,7 +60,6 @@ class _UsuarioDetailPageState extends State<UsuarioDetailPage> {
     _setorController.dispose();
     _statusController.dispose();
     _cpfController.dispose();
-    _rgController.dispose();
     _dataNascimentoController.dispose();
     _cargaHorariaController.dispose();
     super.dispose();
@@ -130,10 +127,6 @@ class _UsuarioDetailPageState extends State<UsuarioDetailPage> {
                     decoration: const InputDecoration(labelText: 'CPF'),
                   ),
                   TextFormField(
-                    controller: _rgController,
-                    decoration: const InputDecoration(labelText: 'RG'),
-                  ),
-                  TextFormField(
                     controller: _dataNascimentoController,
                     decoration: const InputDecoration(
                       labelText: 'Data de Nascimento',
@@ -165,7 +158,6 @@ class _UsuarioDetailPageState extends State<UsuarioDetailPage> {
                   widget.usuario.setor = _setorController.text;
                   widget.usuario.status = _statusController.text;
                   widget.usuario.cpf = _cpfController.text;
-                  widget.usuario.rg = _rgController.text;
                   widget.usuario.dataNascimento =
                       _dataNascimentoController.text;
                   widget.usuario.cargaHoraria = _cargaHorariaController.text;
@@ -268,8 +260,6 @@ class _UsuarioDetailPageState extends State<UsuarioDetailPage> {
         return Icons.info;
       case 'CPF':
         return Icons.badge;
-      case 'RG':
-        return Icons.card_membership;
       case 'Data de Nascimento':
         return Icons.cake;
       case 'Carga Horária':
@@ -395,7 +385,6 @@ class _UsuarioDetailPageState extends State<UsuarioDetailPage> {
                   _buildInfoCard('Setor', widget.usuario.setor),
                   _buildInfoCard('Status', widget.usuario.status),
                   _buildInfoCard('CPF', widget.usuario.cpf),
-                  _buildInfoCard('RG', widget.usuario.rg),
                   _buildInfoCard(
                     'Data de Nascimento',
                     widget.usuario.dataNascimento,

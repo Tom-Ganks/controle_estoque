@@ -1,9 +1,8 @@
-import 'package:controle_estoque/firebase_options.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'presentation/pages/dashboard.dart';
 import 'presentation/pages/login_page.dart';
+import 'presentation/pages/notificacoes_page.dart';
 import 'presentation/pages/produto_page.dart';
 import 'presentation/pages/register_page.dart';
 import 'presentation/pages/solicitacao_page.dart';
@@ -13,12 +12,6 @@ void main() async {
   // Inicialize o FFI para o SQLite
   sqfliteFfiInit();
   databaseFactory = databaseFactoryFfi;
-
-  // Inicialize o Firebase
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
 
   runApp(const MyApp());
 }
@@ -42,6 +35,7 @@ class MyApp extends StatelessWidget {
         '/usuarios': (context) => const UsuarioPage(),
         '/registro': (context) => const RegisterPage(),
         '/produtos': (context) => const ProdutoPage(),
+        '/notificacoes': (context) => const NotificacoesPage(),
       },
     );
   }
