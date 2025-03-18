@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../viewmodels/usuario_viewmodel.dart';
-import '../../models/usuario_model.dart'; // Import the Usuario model
+import '../../models/usuario_model.dart';
+import '../../repositories/usuario_repositorie.dart';
+
 import 'dashboard.dart';
 import 'register_page.dart';
 
@@ -12,37 +13,130 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final TextEditingController usuarioController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
   final TextEditingController senhaController = TextEditingController();
-  final UsuarioViewModel usuarioViewModel = UsuarioViewModel();
-  final _formKey = GlobalKey<FormState>();
+  bool isLoading = false;
+  bool showRegisterButton = true;
+  Usuario? currentUser;
 
-  Future<void> loginUsuario() async {
-    if (_formKey.currentState?.validate() ?? false) {
-      final usuario = usuarioController.text;
-      final senha = senhaController.text;
+  Future<void> _checkUserAccess() async {
+    try {
+      final usuarios = await UsuarioRepository().fetchAll();
+      final hasAdmin = usuarios.any((user) => user.status == 'admin');
 
-      // Call the login method and get the logged-in user
-      final Usuario? loggedInUser =
-          await usuarioViewModel.loginUser(usuario, senha);
-
-      if (mounted) {
-        if (loggedInUser != null) {
-          // If login is successful, navigate to DashboardPage with the logged-in user
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => DashboardPage(
-                  currentUser: loggedInUser), // Pass the logged-in user
-            ),
-          );
-        } else {
-          // If login fails, show an error message
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Usuário ou senha incorretos.')),
-          );
-        }
+      // If no admin exists, show register button
+      if (!hasAdmin) {
+        setState(() {
+          showRegisterButton = true;
+          currentUser = null;
+        });
+        return;
       }
+
+      // Check if current user is admin
+      if (emailController.text.isNotEmpty && senhaController.text.isNotEmpty) {
+        final user = usuarios.firstWhere(
+          (user) =>
+              user.email == emailController.text &&
+              user.senha == senhaController.text,
+          orElse: () => Usuario(
+            nome: '',
+            email: '',
+            telefone: '',
+            endereco: '',
+            cargo: '',
+            senha: '',
+            status: '',
+          ),
+        );
+
+        setState(() {
+          currentUser = user;
+          showRegisterButton = user.status == 'admin';
+        });
+      } else {
+        setState(() {
+          showRegisterButton = false;
+          currentUser = null;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error checking user access: $e');
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _checkUserAccess();
+  }
+
+  Future<void> login() async {
+    if (emailController.text.isEmpty || senhaController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Por favor, preencha todos os campos'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final usuarios = await UsuarioRepository().fetchAll();
+      final usuario = usuarios.firstWhere(
+        (user) =>
+            user.email == emailController.text &&
+            user.senha == senhaController.text,
+        orElse: () => Usuario(
+          nome: '',
+          email: '',
+          telefone: '',
+          endereco: '',
+          cargo: '',
+          senha: '',
+          status: '',
+        ),
+      );
+
+      await _checkUserAccess(); // Update register button visibility
+
+      setState(() {
+        isLoading = false;
+      });
+
+      if (usuario.email.isNotEmpty) {
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DashboardPage(currentUser: usuario),
+          ),
+        );
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Email ou senha inválidos'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro ao fazer login: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -61,76 +155,115 @@ class _LoginPageState extends State<LoginPage> {
           child: Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Image.asset(
-                      'assets/senac.png',
-                      height: 120,
-                      width: 120,
-                    ),
-                    const SizedBox(height: 48),
-                    TextFormField(
-                      controller: usuarioController,
-                      decoration: InputDecoration(
-                        labelText: 'Nome de Usuário',
-                        prefixIcon:
-                            const Icon(Icons.person, color: Colors.blue),
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                      ),
-                      validator: (value) =>
-                          value!.isEmpty ? 'Digite o nome de usuário' : null,
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: senhaController,
-                      obscureText: true,
-                      decoration: InputDecoration(
-                        labelText: 'Senha',
-                        prefixIcon: const Icon(Icons.lock, color: Colors.blue),
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                      ),
-                      validator: (value) =>
-                          value!.isEmpty ? 'Digite a senha' : null,
-                      onFieldSubmitted: (_) =>
-                          loginUsuario(), // Login com Enter
-                    ),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: loginUsuario,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.orange,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16.0),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
                         ),
-                        child: const Text(
-                          'Entrar',
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        Image.asset(
+                          'assets/senac.png',
+                          height: 80,
+                          width: 80,
+                        ),
+                        const SizedBox(height: 24),
+                        const Text(
+                          'Controle de Estoque',
                           style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold),
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue,
+                          ),
                         ),
-                      ),
+                        const SizedBox(height: 32),
+                        TextField(
+                          controller: emailController,
+                          decoration: InputDecoration(
+                            labelText: 'Email',
+                            prefixIcon: const Icon(Icons.email),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          keyboardType: TextInputType.emailAddress,
+                          onChanged: (_) => _checkUserAccess(),
+                        ),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: senhaController,
+                          decoration: InputDecoration(
+                            labelText: 'Senha',
+                            prefixIcon: const Icon(Icons.lock),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          obscureText: true,
+                          onChanged: (_) => _checkUserAccess(),
+                        ),
+                        const SizedBox(height: 24),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: isLoading ? null : login,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: isLoading
+                                ? const CircularProgressIndicator(
+                                    color: Colors.white,
+                                  )
+                                : const Text(
+                                    'Entrar',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 24),
+                  ),
+                  if (showRegisterButton) ...[
+                    const SizedBox(height: 16),
                     TextButton(
                       onPressed: () {
-                        Navigator.pushReplacement(
+                        Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => const RegisterPage()),
+                            builder: (context) => const RegisterPage(),
+                          ),
                         );
                       },
-                      child: const Text('Não tem uma conta? Cadastre-se',
-                          style: TextStyle(color: Colors.white, fontSize: 16)),
+                      child: Text(
+                        currentUser?.status == 'admin'
+                            ? 'Registrar novo usuário'
+                            : 'Criar conta de administrador',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                        ),
+                      ),
                     ),
                   ],
-                ),
+                ],
               ),
             ),
           ),

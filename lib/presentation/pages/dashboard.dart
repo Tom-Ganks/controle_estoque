@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/produto_model.dart';
-import '../../models/usuario_model.dart'; // Import the Usuario model
+import '../../models/usuario_model.dart';
 import '../../repositories/produto_repositorie.dart';
 import '../../widgets/animated_card.dart';
 import '../../widgets/confirmation_dialog.dart';
@@ -8,11 +8,11 @@ import '../../widgets/summary_card.dart';
 import 'login_page.dart';
 
 class DashboardPage extends StatefulWidget {
-  final Usuario currentUser; // Add currentUser parameter
+  final Usuario currentUser;
 
   const DashboardPage({
     super.key,
-    required this.currentUser, // Make currentUser required
+    required this.currentUser,
   });
 
   @override
@@ -24,7 +24,11 @@ class _DashboardPageState extends State<DashboardPage> {
   int produtosEmFalta = 0;
   int produtosAcabando = 0;
   List<Produto> produtos = [];
+  List<Produto> filteredProdutos = [];
   bool isLoading = true;
+  String currentFilter = '';
+  String searchQuery = '';
+  final TextEditingController searchController = TextEditingController();
 
   @override
   void initState() {
@@ -41,6 +45,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
       setState(() {
         produtos = produtosList;
+        _applyFilters(); // Apply filters after fetching
         totalProdutos = produtosList.length;
         produtosEmFalta = produtosList.where((p) => p.saldo <= 0).length;
         produtosAcabando =
@@ -63,10 +68,44 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
+  void _filterProducts(String filter) {
+    setState(() {
+      currentFilter = filter;
+      _applyFilters();
+    });
+  }
+
+  void _applyFilters() {
+    List<Produto> tempList = List.from(produtos);
+
+    // Apply category filter
+    switch (currentFilter) {
+      case 'acabando':
+        tempList = tempList.where((p) => p.saldo > 0 && p.saldo <= 5).toList();
+        break;
+      case 'emFalta':
+        tempList = tempList.where((p) => p.saldo <= 0).toList();
+        break;
+    }
+
+    // Apply search filter
+    if (searchQuery.isNotEmpty) {
+      tempList = tempList
+          .where(
+              (p) => p.nome.toLowerCase().contains(searchQuery.toLowerCase()))
+          .toList();
+    }
+
+    setState(() {
+      filteredProdutos = tempList;
+    });
+  }
+
   Future<void> _showNotification() async {
-    await Future.delayed(const Duration(seconds: 1)); // Aguarda o carregamento
+    await Future.delayed(const Duration(seconds: 1));
 
     if (produtosEmFalta > 0 || produtosAcabando > 0) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -137,9 +176,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         children: [
                           Expanded(
                             child: GestureDetector(
-                              onTap: () {
-                                Navigator.pushNamed(context, '/produtos');
-                              },
+                              onTap: () => _filterProducts(''),
                               child: SummaryCard(
                                 label: 'Total de Produtos',
                                 value: totalProdutos,
@@ -150,9 +187,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           const SizedBox(width: 16),
                           Expanded(
                             child: GestureDetector(
-                              onTap: () {
-                                Navigator.pushNamed(context, '/produtos');
-                              },
+                              onTap: () => _filterProducts('emFalta'),
                               child: SummaryCard(
                                 label: 'Produtos em Falta',
                                 value: produtosEmFalta,
@@ -163,9 +198,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           const SizedBox(width: 16),
                           Expanded(
                             child: GestureDetector(
-                              onTap: () {
-                                Navigator.pushNamed(context, '/produtos');
-                              },
+                              onTap: () => _filterProducts('acabando'),
                               child: SummaryCard(
                                 label: 'Produtos Acabando',
                                 value: produtosAcabando,
@@ -189,62 +222,130 @@ class _DashboardPageState extends State<DashboardPage> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            AnimatedActionCard(
-                              icon: Icons.inventory,
-                              label: 'Gerenciar\nEstoque',
-                              color: Colors.blue,
-                              onTap: () {
-                                Navigator.pushNamed(context, '/produtos')
-                                    .then((_) => _refreshData());
-                              },
-                            ),
-                            AnimatedActionCard(
-                              icon: Icons.people_alt_rounded,
-                              label: 'Staff',
-                              color: Colors.red,
-                              onTap: () {
-                                if (widget.currentUser.status == 'admin') {
+                            if (widget.currentUser.status == 'admin') ...[
+                              AnimatedActionCard(
+                                icon: Icons.inventory,
+                                label: 'Gerenciar\nEstoque',
+                                color: Colors.blue,
+                                onTap: () {
+                                  Navigator.pushNamed(context, '/produtos')
+                                      .then((_) => _refreshData());
+                                },
+                              ),
+                              AnimatedActionCard(
+                                icon: Icons.people_alt_rounded,
+                                label: 'Staff',
+                                color: Colors.red,
+                                onTap: () {
                                   Navigator.pushNamed(
                                     context,
                                     '/usuarios',
                                     arguments: widget.currentUser,
                                   ).then((_) => _refreshData());
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                          'Acesso restrito a administradores.'),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                }
-                              },
-                            ),
-                            AnimatedActionCard(
-                              icon: Icons.notifications,
-                              label: 'Notificações',
-                              color: Colors.purple,
-                              onTap: () {
-                                if (widget.currentUser.status == 'admin') {
+                                },
+                              ),
+                              AnimatedActionCard(
+                                icon: Icons.notifications,
+                                label: 'Notificações',
+                                color: Colors.purple,
+                                onTap: () {
                                   Navigator.pushNamed(
                                     context,
                                     '/notificacoes',
                                     arguments: widget.currentUser,
                                   ).then((_) => _refreshData());
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                          'Acesso restrito a administradores.'),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                }
+                                },
+                              ),
+                            ],
+                            AnimatedActionCard(
+                              icon: Icons.shopping_cart,
+                              label: 'Solicitações',
+                              color: Colors.green,
+                              onTap: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  '/solicitacoes',
+                                  arguments: widget.currentUser,
+                                ).then((_) => _refreshData());
                               },
                             ),
                           ],
                         ),
                       ),
+                      if (currentFilter.isNotEmpty) ...[
+                        const SizedBox(height: 24),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'Produtos ${currentFilter == "acabando" ? "Acabando" : "em Falta"}',
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close),
+                              onPressed: () => _filterProducts(''),
+                              tooltip: 'Limpar filtro',
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: searchController,
+                          decoration: InputDecoration(
+                            hintText: 'Pesquisar produtos...',
+                            prefixIcon: const Icon(Icons.search),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            suffixIcon: searchController.text.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear),
+                                    onPressed: () {
+                                      searchController.clear();
+                                      setState(() {
+                                        searchQuery = '';
+                                        _applyFilters();
+                                      });
+                                    },
+                                  )
+                                : null,
+                          ),
+                          onChanged: (value) {
+                            setState(() {
+                              searchQuery = value;
+                              _applyFilters();
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: filteredProdutos.length,
+                          itemBuilder: (context, index) {
+                            final produto = filteredProdutos[index];
+                            return Card(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              child: ListTile(
+                                title: Text(produto.nome),
+                                subtitle: Text('Saldo: ${produto.saldo}'),
+                                trailing: Icon(
+                                  produto.saldo <= 0
+                                      ? Icons.error
+                                      : Icons.warning,
+                                  color: produto.saldo <= 0
+                                      ? Colors.red
+                                      : Colors.orange,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                     ],
                   ),
                 ),

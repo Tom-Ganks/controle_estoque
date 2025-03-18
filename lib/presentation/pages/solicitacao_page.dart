@@ -197,7 +197,8 @@ class _SolicitacaoPageState extends State<SolicitacaoPage> {
                 child: Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      icon: const Icon(Icons.arrow_back,
+                          color: Color.fromARGB(255, 39, 37, 37)),
                       onPressed: () {
                         Navigator.pushReplacement(
                           context,

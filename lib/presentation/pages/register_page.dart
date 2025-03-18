@@ -360,19 +360,37 @@ class _TelefoneInputFormatter extends TextInputFormatter {
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
-    final text =
-        newValue.text.replaceAll(RegExp(r'[^0-9]'), ''); // Remove non-digits
-    if (text.length > 11) return oldValue; // Limit to 11 digits
+    // Remove all non-digit characters
+    String text = newValue.text.replaceAll(RegExp(r'[^\d]'), '');
+
+    // Limit to max 11 digits
+    if (text.length > 11) {
+      text = text.substring(0, 11);
+    }
 
     String formattedText = '';
-    if (text.length >= 2) {
-      formattedText += '(${text.substring(0, 2)})'; // Add DDD in parentheses
-    }
-    if (text.length > 2) {
-      formattedText += ' ${text.substring(2, 7)}'; // Add first 5 digits
-    }
-    if (text.length > 7) {
-      formattedText += '-${text.substring(7)}'; // Add hyphen and last 4 digits
+
+    // Format: (XX) XXXXX-XXXX or (XX) XXXX-XXXX
+    if (text.isNotEmpty) {
+      // Add area code
+      formattedText = '(${text.substring(0, text.length.clamp(0, 2))}';
+
+      if (text.length > 2) {
+        formattedText += ') ';
+
+        // Add first part of the number
+        if (text.length <= 6) {
+          formattedText += text.substring(2);
+        } else {
+          formattedText += text.substring(2, 6);
+
+          // Add hyphen and remaining digits
+          if (text.length > 6) {
+            formattedText += '-';
+            formattedText += text.substring(6);
+          }
+        }
+      }
     }
 
     return TextEditingValue(
@@ -382,32 +400,38 @@ class _TelefoneInputFormatter extends TextInputFormatter {
   }
 }
 
-// Custom formatter for CPF
 class _CpfInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
-    final text =
-        newValue.text.replaceAll(RegExp(r'[^0-9]'), ''); // Remove non-digits
-    if (text.length > 11) return oldValue; // Limit to 11 digits
+    // Remove all non-digit characters
+    String text = newValue.text.replaceAll(RegExp(r'[^\d]'), '');
+
+    // Limit to 11 digits
+    if (text.length > 11) {
+      text = text.substring(0, 11);
+    }
 
     String formattedText = '';
-    if (text.length >= 3) {
-      formattedText +=
-          '${text.substring(0, 3)}.'; // Add first 3 digits and a dot
-    }
-    if (text.length >= 6) {
-      formattedText +=
-          '${text.substring(3, 6)}.'; // Add next 3 digits and a dot
-    }
-    if (text.length >= 9) {
-      formattedText +=
-          '${text.substring(6, 9)}-'; // Add next 3 digits and a hyphen
-    }
-    if (text.length >= 11) {
-      formattedText += text.substring(9); // Add last 2 digits
+
+    // Format: XXX.XXX.XXX-XX
+    if (text.isNotEmpty) {
+      // First group
+      formattedText = text.substring(0, text.length.clamp(0, 3));
+
+      if (text.length > 3) {
+        formattedText += '.${text.substring(3, text.length.clamp(3, 6))}';
+
+        if (text.length > 6) {
+          formattedText += '.${text.substring(6, text.length.clamp(6, 9))}';
+
+          if (text.length > 9) {
+            formattedText += '-${text.substring(9)}';
+          }
+        }
+      }
     }
 
     return TextEditingValue(
