@@ -1,8 +1,99 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../models/usuario_model.dart';
-import '../../repositories/usuario_repositorie.dart';
+import '../../repositories/usuario_repository.dart';
+
+// Formatter classes
+class _TelefoneInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    String text = newValue.text.replaceAll(RegExp(r'[^\d]'), '');
+    if (text.length > 11) text = text.substring(0, 11);
+
+    String formattedText = '';
+    if (text.isNotEmpty) {
+      formattedText = '(${text.substring(0, text.length.clamp(0, 2))}';
+      if (text.length > 2) {
+        formattedText += ') ';
+        if (text.length <= 6) {
+          formattedText += text.substring(2);
+        } else {
+          formattedText += text.substring(2, 6);
+          if (text.length > 6) {
+            formattedText += '-${text.substring(6)}';
+          }
+        }
+      }
+    }
+
+    return TextEditingValue(
+      text: formattedText,
+      selection: TextSelection.collapsed(offset: formattedText.length),
+    );
+  }
+}
+
+class _CpfInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    String text = newValue.text.replaceAll(RegExp(r'[^\d]'), '');
+    if (text.length > 11) text = text.substring(0, 11);
+
+    String formattedText = '';
+    if (text.isNotEmpty) {
+      formattedText = text.substring(0, text.length.clamp(0, 3));
+      if (text.length > 3) {
+        formattedText += '.${text.substring(3, text.length.clamp(3, 6))}';
+        if (text.length > 6) {
+          formattedText += '.${text.substring(6, text.length.clamp(6, 9))}';
+          if (text.length > 9) {
+            formattedText += '-${text.substring(9)}';
+          }
+        }
+      }
+    }
+
+    return TextEditingValue(
+      text: formattedText,
+      selection: TextSelection.collapsed(offset: formattedText.length),
+    );
+  }
+}
+
+class _DataNascimentoInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    String text = newValue.text.replaceAll(RegExp(r'[^\d]'), '');
+    if (text.length > 8) text = text.substring(0, 8);
+
+    String formattedText = '';
+    if (text.isNotEmpty) {
+      formattedText = text.substring(0, text.length.clamp(0, 2));
+      if (text.length > 2) {
+        formattedText += '/${text.substring(2, text.length.clamp(2, 4))}';
+        if (text.length > 4) {
+          formattedText += '/${text.substring(4)}';
+        }
+      }
+    }
+
+    return TextEditingValue(
+      text: formattedText,
+      selection: TextSelection.collapsed(offset: formattedText.length),
+    );
+  }
+}
 
 class UsuarioDetailPage extends StatefulWidget {
   final Usuario usuario;
@@ -26,6 +117,7 @@ class _UsuarioDetailPageState extends State<UsuarioDetailPage> {
   late TextEditingController _cpfController;
   late TextEditingController _dataNascimentoController;
   late TextEditingController _cargaHorariaController;
+  late TextEditingController _turmaController;
 
   @override
   void initState() {
@@ -48,6 +140,9 @@ class _UsuarioDetailPageState extends State<UsuarioDetailPage> {
     _cargaHorariaController = TextEditingController(
       text: widget.usuario.cargaHoraria,
     );
+    _turmaController = TextEditingController(
+      text: widget.usuario.turma,
+    );
   }
 
   @override
@@ -62,6 +157,7 @@ class _UsuarioDetailPageState extends State<UsuarioDetailPage> {
     _cpfController.dispose();
     _dataNascimentoController.dispose();
     _cargaHorariaController.dispose();
+    _turmaController.dispose();
     super.dispose();
   }
 
@@ -105,6 +201,12 @@ class _UsuarioDetailPageState extends State<UsuarioDetailPage> {
                   TextFormField(
                     controller: _telefoneController,
                     decoration: const InputDecoration(labelText: 'Telefone'),
+                    keyboardType: TextInputType.phone,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(11),
+                      _TelefoneInputFormatter(),
+                    ],
                   ),
                   TextFormField(
                     controller: _enderecoController,
@@ -125,17 +227,35 @@ class _UsuarioDetailPageState extends State<UsuarioDetailPage> {
                   TextFormField(
                     controller: _cpfController,
                     decoration: const InputDecoration(labelText: 'CPF'),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(11),
+                      _CpfInputFormatter(),
+                    ],
                   ),
                   TextFormField(
                     controller: _dataNascimentoController,
                     decoration: const InputDecoration(
                       labelText: 'Data de Nascimento',
                     ),
+                    keyboardType: TextInputType.datetime,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(8),
+                      _DataNascimentoInputFormatter(),
+                    ],
                   ),
                   TextFormField(
                     controller: _cargaHorariaController,
                     decoration: const InputDecoration(
                       labelText: 'Carga Horária',
+                    ),
+                  ),
+                  TextFormField(
+                    controller: _turmaController,
+                    decoration: const InputDecoration(
+                      labelText: 'Turma',
                     ),
                   ),
                 ],
@@ -161,6 +281,7 @@ class _UsuarioDetailPageState extends State<UsuarioDetailPage> {
                   widget.usuario.dataNascimento =
                       _dataNascimentoController.text;
                   widget.usuario.cargaHoraria = _cargaHorariaController.text;
+                  widget.usuario.turma = _turmaController.text;
 
                   await UsuarioRepository().update(widget.usuario);
                   if (mounted) {
@@ -264,6 +385,8 @@ class _UsuarioDetailPageState extends State<UsuarioDetailPage> {
         return Icons.cake;
       case 'Carga Horária':
         return Icons.access_time;
+      case 'Turma':
+        return Icons.group;
       default:
         return Icons.info;
     }
@@ -390,6 +513,7 @@ class _UsuarioDetailPageState extends State<UsuarioDetailPage> {
                     widget.usuario.dataNascimento,
                   ),
                   _buildInfoCard('Carga Horária', widget.usuario.cargaHoraria),
+                  _buildInfoCard('Turma', widget.usuario.turma),
                 ],
               ),
             ),

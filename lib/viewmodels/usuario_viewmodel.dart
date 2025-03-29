@@ -1,5 +1,5 @@
 import '../models/usuario_model.dart';
-import '../repositories/usuario_repositorie.dart';
+import '../repositories/usuario_repository.dart';
 
 class UsuarioViewModel {
   final UsuarioRepository _repository = UsuarioRepository();

@@ -4,7 +4,7 @@ import 'package:flutter/services.dart'; // Import for TextInputFormatter
 import 'package:image_picker/image_picker.dart';
 
 import '../../models/usuario_model.dart';
-import '../../repositories/usuario_repositorie.dart';
+import '../../repositories/usuario_repository.dart';
 import 'login_page.dart';
 
 class RegisterPage extends StatefulWidget {

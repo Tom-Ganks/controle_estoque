@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/produto_model.dart';
-import '../../repositories/produto_repositorie.dart';
+import '../../repositories/produto_repository.dart';
 import '../../widgets/confirmation_dialog.dart';
 import '../../widgets/produtoform_dialog.dart';
 
@@ -269,9 +269,9 @@ class _ProdutoPageState extends State<ProdutoPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _addProduto,
+        onPressed: _fetchProdutos,
         backgroundColor: Colors.orange,
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.refresh),
       ),
     );
   }

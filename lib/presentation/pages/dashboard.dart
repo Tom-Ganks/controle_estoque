@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/produto_model.dart';
 import '../../models/usuario_model.dart';
-import '../../repositories/produto_repositorie.dart';
+import '../../repositories/produto_repository.dart';
 import '../../widgets/animated_card.dart';
 import '../../widgets/confirmation_dialog.dart';
 import '../../widgets/summary_card.dart';
@@ -175,39 +175,49 @@ class _DashboardPageState extends State<DashboardPage> {
                       Row(
                         children: [
                           Expanded(
-                            child: GestureDetector(
-                              onTap: () => _filterProducts(''),
-                              child: SummaryCard(
-                                label: 'Total de Produtos',
-                                value: totalProdutos,
-                                color: Colors.orange,
+                            child: MouseRegion(
+                              cursor: SystemMouseCursors.click,
+                              child: GestureDetector(
+                                onTap: () => _filterProducts(''),
+                                child: SummaryCard(
+                                  label: 'Total de Produtos',
+                                  value: totalProdutos,
+                                  color: Colors.orange,
+                                ),
                               ),
                             ),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
-                            child: GestureDetector(
-                              onTap: () => _filterProducts('emFalta'),
-                              child: SummaryCard(
-                                label: 'Produtos em Falta',
-                                value: produtosEmFalta,
-                                color: Colors.red,
+                            child: MouseRegion(
+                              cursor: SystemMouseCursors.click,
+                              child: GestureDetector(
+                                onTap: () => _filterProducts('emFalta'),
+                                child: SummaryCard(
+                                  label: 'Produtos em Falta',
+                                  value: produtosEmFalta,
+                                  color: Colors.red,
+                                ),
                               ),
                             ),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
-                            child: GestureDetector(
-                              onTap: () => _filterProducts('acabando'),
-                              child: SummaryCard(
-                                label: 'Produtos Acabando',
-                                value: produtosAcabando,
-                                color: Colors.yellow,
+                            child: MouseRegion(
+                              cursor: SystemMouseCursors.click,
+                              child: GestureDetector(
+                                onTap: () => _filterProducts('acabando'),
+                                child: SummaryCard(
+                                  label: 'Produtos Acabando',
+                                  value: produtosAcabando,
+                                  color: Colors.yellow,
+                                ),
                               ),
                             ),
                           ),
                         ],
                       ),
+                      // Rest of the code remains unchanged...
                       const SizedBox(height: 24),
                       const Center(
                         child: Text(
@@ -252,6 +262,19 @@ class _DashboardPageState extends State<DashboardPage> {
                                   Navigator.pushNamed(
                                     context,
                                     '/notificacoes',
+                                    arguments: widget.currentUser,
+                                  ).then((_) => _refreshData());
+                                },
+                              ),
+                            ] else ...[
+                              AnimatedActionCard(
+                                icon: Icons.track_changes,
+                                label: 'Progresso',
+                                color: Colors.blue,
+                                onTap: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/progresso',
                                     arguments: widget.currentUser,
                                   ).then((_) => _refreshData());
                                 },

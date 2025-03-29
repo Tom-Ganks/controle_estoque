@@ -53,6 +53,48 @@ class _NotificacoesPageState extends State<NotificacoesPage> {
     }
   }
 
+  Future<void> _clearAllNotifications() async {
+    if (_notificacoes.isEmpty) return;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Limpar Notificações'),
+        content:
+            const Text('Tem certeza que deseja excluir todas as notificações?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Confirmar'),
+          ),
+        ],
+      ),
+    );
+    if (confirm == true) {
+      try {
+        await _repository
+            .deleteAll(); // Assuming this method exists or needs to be added
+        await _loadNotificacoes();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Todas as notificações foram excluídas')),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Erro ao excluir notificações')),
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -86,7 +128,11 @@ class _NotificacoesPageState extends State<NotificacoesPage> {
                         textAlign: TextAlign.center,
                       ),
                     ),
-                    const SizedBox(width: 48),
+                    IconButton(
+                      icon: const Icon(Icons.delete_sweep, color: Colors.white),
+                      onPressed: _clearAllNotifications,
+                      tooltip: 'Limpar todas as notificações',
+                    ),
                   ],
                 ),
               ),
@@ -142,6 +188,11 @@ class _NotificacoesPageState extends State<NotificacoesPage> {
                                         const SizedBox(height: 8),
                                         Text(
                                           'Cargo: ${notificacao.solicitanteCargo}',
+                                          style: TextStyle(
+                                              color: Colors.grey[600]),
+                                        ),
+                                        Text(
+                                          'Turma: ${notificacao.solicitanteTurma ?? "Não especificada"}',
                                           style: TextStyle(
                                               color: Colors.grey[600]),
                                         ),

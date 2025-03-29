@@ -12,6 +12,7 @@ class Usuario {
   String? cpf; // Novo campo
   String? dataNascimento; // Novo campo
   String? cargaHoraria; // Novo campo
+  String? turma;
 
   Usuario({
     this.id,
@@ -27,6 +28,7 @@ class Usuario {
     this.cpf,
     this.dataNascimento,
     this.cargaHoraria, // Novo campo
+    this.turma,
   });
 
   Map<String, dynamic> toMap() {
@@ -44,6 +46,7 @@ class Usuario {
       'cpf': cpf, // Novo campo
       'dataNascimento': dataNascimento, // Novo campo
       'cargaHoraria': cargaHoraria, // Novo campo
+      'turma': turma,
     };
   }
 
@@ -62,6 +65,7 @@ class Usuario {
       cpf: map['cpf'], // Novo campo
       dataNascimento: map['dataNascimento'], // Novo campo
       cargaHoraria: map['cargaHoraria'], // Novo campo
+      turma: map['turma'],
     );
   }
 }

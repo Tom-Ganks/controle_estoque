@@ -23,7 +23,7 @@ class DatabaseHelper {
     final path = join(dbPath, 'controle_estoque.db');
     return await openDatabase(
       path,
-      version: 2, // Increment version for new table
+      version: 3, // Incremented from 2 to 3 for turma column
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -59,7 +59,8 @@ class DatabaseHelper {
         cpf TEXT, 
         rg TEXT, 
         dataNascimento TEXT, 
-        cargaHoraria TEXT
+        cargaHoraria TEXT,
+        turma TEXT  // Added turma column
       )
     ''');
 
@@ -78,7 +79,6 @@ class DatabaseHelper {
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
-      // Add notificacoes table if upgrading from version 1
       await db.execute('''
         CREATE TABLE IF NOT EXISTS notificacoes (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -91,9 +91,17 @@ class DatabaseHelper {
         )
       ''');
     }
+
+    if (oldVersion < 3) {
+      // Add turma column to usuarios table
+      await db.execute('ALTER TABLE usuarios ADD COLUMN turma TEXT');
+
+      await db.execute(
+          'ALTER TABLE notificacoes ADD COLUMN solicitante_turma TEXT');
+    }
   }
 
-  // Existing Produto methods...
+  // ... [rest of your existing methods remain unchanged]
   Future<int> insertProduto(Produto produto) async {
     final db = await database;
     return await db.insert('produtos', produto.toMap());
@@ -121,7 +129,6 @@ class DatabaseHelper {
         .delete('produtos', where: 'idProdutos = ?', whereArgs: [id]);
   }
 
-  // Existing Usuario methods...
   Future<int> insertUsuario(Usuario usuario) async {
     final db = await database;
     return await db.insert('usuarios', usuario.toMap());
@@ -148,7 +155,6 @@ class DatabaseHelper {
     return await db.delete('usuarios', where: 'id = ?', whereArgs: [id]);
   }
 
-  // New Notification methods
   Future<int> insertNotificacao(Notificacao notificacao) async {
     final db = await database;
     return await db.insert('notificacoes', notificacao.toMap());

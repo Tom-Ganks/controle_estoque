@@ -3,7 +3,7 @@ import '../../core/database_helper.dart';
 import '../../models/produto_model.dart';
 import '../../models/usuario_model.dart';
 import '../../models/notificacoes_model.dart';
-import '../../repositories/produto_repositorie.dart';
+import '../../repositories/produto_repository.dart';
 import 'dashboard.dart';
 
 class SolicitacaoPage extends StatefulWidget {
@@ -137,8 +137,10 @@ class _SolicitacaoPageState extends State<SolicitacaoPage> {
     if (quantidade != null) {
       // Create and save notification
       final notificacao = Notificacao(
+        id: widget.currentUser.id, // Add this
         solicitanteNome: widget.currentUser.nome,
         solicitanteCargo: widget.currentUser.cargo,
+        solicitanteTurma: widget.currentUser.turma, // Add this
         produtoNome: produto.nome,
         quantidade: quantidade,
         dataSolicitacao: DateTime.now(),

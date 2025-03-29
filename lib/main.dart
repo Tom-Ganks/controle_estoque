@@ -4,6 +4,7 @@ import 'presentation/pages/dashboard.dart';
 import 'presentation/pages/login_page.dart';
 import 'presentation/pages/notificacoes_page.dart';
 import 'presentation/pages/produto_page.dart';
+import 'presentation/pages/progresso_page.dart'; // Add this import
 import 'presentation/pages/register_page.dart';
 import 'presentation/pages/solicitacao_page.dart';
 import 'presentation/pages/usuario_page.dart';
@@ -60,6 +61,11 @@ class MyApp extends StatelessWidget {
             case '/produtos':
               return MaterialPageRoute(
                   builder: (context) => const ProdutoPage());
+            case '/progresso': // Add this new route
+              final Usuario currentUser = settings.arguments as Usuario;
+              return MaterialPageRoute(
+                builder: (context) => ProgressoPage(currentUser: currentUser),
+              );
             default:
               return MaterialPageRoute(builder: (context) => const LoginPage());
           }

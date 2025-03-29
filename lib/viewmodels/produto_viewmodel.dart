@@ -1,5 +1,5 @@
 import '../models/produto_model.dart';
-import '../repositories/produto_repositorie.dart';
+import '../repositories/produto_repository.dart';
 
 class ProdutoViewModel {
   final ProdutoRepository _repository = ProdutoRepository();

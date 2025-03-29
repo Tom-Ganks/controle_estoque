@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../models/usuario_model.dart';
-import '../../repositories/usuario_repositorie.dart';
+import '../../repositories/usuario_repository.dart';
 import 'dashboard.dart';
 import 'usuario_detail.dart';
 

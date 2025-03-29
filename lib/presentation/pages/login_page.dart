@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/usuario_model.dart';
-import '../../repositories/usuario_repositorie.dart';
+import '../../repositories/usuario_repository.dart';
 
 import 'dashboard.dart';
 import 'register_page.dart';
@@ -212,6 +212,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                           obscureText: true,
                           onChanged: (_) => _checkUserAccess(),
+                          onSubmitted: (_) => login(),
                         ),
                         const SizedBox(height: 24),
                         SizedBox(
