@@ -1,33 +1,46 @@
-import 'package:controle_estoque/models/usuario_model.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../models/usuario_model.dart';
 import '../../models/notificacoes_model.dart';
-import '../../repositories/notificacao_repository.dart';
+import '../../viewmodels/notificacoes_viewmodel.dart';
 
 class NotificacoesPage extends StatefulWidget {
-  const NotificacoesPage({super.key, required Usuario currentUser});
+  final Usuario currentUser;
+
+  const NotificacoesPage({
+    super.key,
+    required this.currentUser,
+  });
 
   @override
   State<NotificacoesPage> createState() => _NotificacoesPageState();
 }
 
 class _NotificacoesPageState extends State<NotificacoesPage> {
-  final NotificacaoRepository _repository = NotificacaoRepository();
-  List<Notificacao> _notificacoes = [];
+  final NotificacoesViewModel _viewModel = NotificacoesViewModel();
+  List<Notificacao> _notificacoesFiltradas = [];
+  final TextEditingController _searchController = TextEditingController();
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _loadNotificacoes();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadNotificacoes() async {
     setState(() => _isLoading = true);
     try {
-      final notificacoes = await _repository.fetchAll();
+      await _viewModel.fetchAllNotificacoes();
       setState(() {
-        _notificacoes = notificacoes;
+        _notificacoesFiltradas = _viewModel.notificacoes;
         _isLoading = false;
       });
     } catch (e) {
@@ -40,11 +53,25 @@ class _NotificacoesPageState extends State<NotificacoesPage> {
     }
   }
 
+  void _onSearchChanged() {
+    final query = _searchController.text.toLowerCase();
+    setState(() {
+      _notificacoesFiltradas = _viewModel.notificacoes.where((n) {
+        final produto = n.produtoNome.toLowerCase();
+        final solicitante = n.solicitanteNome.toLowerCase();
+        final cargo = n.solicitanteCargo.toLowerCase();
+        return produto.contains(query) ||
+            solicitante.contains(query) ||
+            cargo.contains(query);
+      }).toList();
+    });
+  }
+
   Future<void> _markAsRead(Notificacao notificacao) async {
-    try {
-      await _repository.markAsRead(notificacao.id!);
+    final success = await _viewModel.markAsRead(notificacao.id!);
+    if (success) {
       await _loadNotificacoes();
-    } catch (e) {
+    } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Erro ao marcar como lida')),
@@ -54,7 +81,7 @@ class _NotificacoesPageState extends State<NotificacoesPage> {
   }
 
   Future<void> _clearAllNotifications() async {
-    if (_notificacoes.isEmpty) return;
+    if (_viewModel.notificacoes.isEmpty) return;
 
     final confirm = await showDialog<bool>(
       context: context,
@@ -74,10 +101,10 @@ class _NotificacoesPageState extends State<NotificacoesPage> {
         ],
       ),
     );
+
     if (confirm == true) {
-      try {
-        await _repository
-            .deleteAll(); // Assuming this method exists or needs to be added
+      final success = await _viewModel.deleteAllNotificacoes();
+      if (success) {
         await _loadNotificacoes();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -85,7 +112,7 @@ class _NotificacoesPageState extends State<NotificacoesPage> {
                 content: Text('Todas as notificações foram excluídas')),
           );
         }
-      } catch (e) {
+      } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Erro ao excluir notificações')),
@@ -136,6 +163,25 @@ class _NotificacoesPageState extends State<NotificacoesPage> {
                   ],
                 ),
               ),
+              // Campo de busca
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Buscar notificações...',
+                    prefixIcon: const Icon(Icons.search),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
               Expanded(
                 child: Container(
                   decoration: const BoxDecoration(
@@ -147,15 +193,16 @@ class _NotificacoesPageState extends State<NotificacoesPage> {
                   ),
                   child: _isLoading
                       ? const Center(child: CircularProgressIndicator())
-                      : _notificacoes.isEmpty
+                      : _notificacoesFiltradas.isEmpty
                           ? const Center(
                               child: Text('Nenhuma notificação encontrada'),
                             )
                           : ListView.builder(
                               padding: const EdgeInsets.all(16),
-                              itemCount: _notificacoes.length,
+                              itemCount: _notificacoesFiltradas.length,
                               itemBuilder: (context, index) {
-                                final notificacao = _notificacoes[index];
+                                final notificacao =
+                                    _notificacoesFiltradas[index];
                                 return Card(
                                   elevation: 2,
                                   margin: const EdgeInsets.only(bottom: 12),
@@ -168,7 +215,7 @@ class _NotificacoesPageState extends State<NotificacoesPage> {
                                       backgroundColor: notificacao.lida
                                           ? Colors.grey
                                           : Colors.orange,
-                                      child: Icon(
+                                      child: const Icon(
                                         Icons.notifications,
                                         color: Colors.white,
                                       ),
@@ -188,11 +235,6 @@ class _NotificacoesPageState extends State<NotificacoesPage> {
                                         const SizedBox(height: 8),
                                         Text(
                                           'Cargo: ${notificacao.solicitanteCargo}',
-                                          style: TextStyle(
-                                              color: Colors.grey[600]),
-                                        ),
-                                        Text(
-                                          'Turma: ${notificacao.solicitanteTurma ?? "Não especificada"}',
                                           style: TextStyle(
                                               color: Colors.grey[600]),
                                         ),

@@ -1,55 +1,73 @@
+import 'package:flutter/material.dart';
 import '../models/usuario_model.dart';
+import '../models/cargo_model.dart';
 import '../repositories/usuario_repository.dart';
+import '../repositories/cargo_repository.dart';
 
-class UsuarioViewModel {
-  final UsuarioRepository _repository = UsuarioRepository();
-  List<Usuario> usuarios = [];
+class UsuarioViewModel with ChangeNotifier {
+  final UsuarioRepository _usuarioRepository = UsuarioRepository();
+  final CargoRepository _cargoRepository = CargoRepository();
 
-  Future<void> fetchAllUsuarios() async {
-    usuarios = await _repository.fetchAll();
-  }
+  List<Usuario> _usuarios = [];
+  List<Cargo> _cargos = [];
+  bool _isLoading = false;
+  String _searchQuery = '';
 
-  Future<bool> insertUsuario(Usuario usuario) async {
+  List<Usuario> get usuarios => _usuarios
+      .where((usuario) =>
+          usuario.nome.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          usuario.email.toLowerCase().contains(_searchQuery.toLowerCase()))
+      .toList();
+
+  List<Cargo> get cargos => _cargos;
+  bool get isLoading => _isLoading;
+
+  Future<void> fetchUsuarios() async {
     try {
-      await _repository.insert(usuario);
-      return true;
+      _isLoading = true;
+      notifyListeners();
+
+      _usuarios = await _usuarioRepository.fetchAll();
+      _cargos = await _cargoRepository.fetchAll();
+
+      _isLoading = false;
+      notifyListeners();
     } catch (e) {
-      return false;
+      _isLoading = false;
+      notifyListeners();
+      rethrow;
     }
   }
 
-  Future<bool> updateUsuario(Usuario usuario) async {
+  Future<void> addUsuario(Usuario usuario) async {
     try {
-      await _repository.update(usuario);
-      return true;
+      await _usuarioRepository.insert(usuario);
+      await fetchUsuarios();
     } catch (e) {
-      return false;
+      rethrow;
     }
   }
 
-  Future<bool> deleteUsuario(int id) async {
+  Future<void> updateUsuario(Usuario usuario) async {
     try {
-      await _repository.delete(id);
-      return true;
+      await _usuarioRepository.update(usuario);
+      await fetchUsuarios();
     } catch (e) {
-      return false;
+      rethrow;
     }
   }
 
-  Future<Usuario?> loginUser(String email, String senha) async {
+  Future<void> deleteUsuario(int id) async {
     try {
-      await fetchAllUsuarios(); // Ensure we have the latest user list
-
-      // Find user with matching email and password
-      final user = usuarios.firstWhere(
-        (u) => u.email == email && u.senha == senha,
-        orElse: () => throw Exception('User not found'),
-      );
-
-      // Return the logged-in user
-      return user;
+      await _usuarioRepository.delete(id);
+      await fetchUsuarios();
     } catch (e) {
-      return null; // Return null if login fails
+      rethrow;
     }
+  }
+
+  void setSearchQuery(String query) {
+    _searchQuery = query;
+    notifyListeners();
   }
 }

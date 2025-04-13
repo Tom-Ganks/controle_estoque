@@ -5,18 +5,39 @@ class ProdutoRepository {
   final DatabaseHelper _databaseHelper = DatabaseHelper();
 
   Future<int> insert(Produto produto) async {
-    return await _databaseHelper.insertProduto(produto);
+    final db = await _databaseHelper.database;
+    return await db.insert('produtos', produto.toMap());
   }
 
   Future<List<Produto>> fetchAll() async {
-    return await _databaseHelper.fetchAllProdutos();
+    final db = await _databaseHelper.database;
+    final List<Map<String, dynamic>> maps = await db.query('produtos');
+    return List.generate(maps.length, (i) => Produto.fromMap(maps[i]));
+  }
+
+  Future<List<Produto>> fetchLowStock() async {
+    final db = await _databaseHelper.database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'produtos',
+      where: 'saldo <= ?',
+      whereArgs: [5],
+    );
+    return List.generate(maps.length, (i) => Produto.fromMap(maps[i]));
   }
 
   Future<int> update(Produto produto) async {
-    return await _databaseHelper.updateProduto(produto);
+    final db = await _databaseHelper.database;
+    return await db.update(
+      'produtos',
+      produto.toMap(),
+      where: 'idProdutos = ?',
+      whereArgs: [produto.idProdutos],
+    );
   }
 
   Future<int> delete(int id) async {
-    return await _databaseHelper.deleteProduto(id);
+    final db = await _databaseHelper.database;
+    return await db
+        .delete('produtos', where: 'idProdutos = ?', whereArgs: [id]);
   }
 }

@@ -4,11 +4,11 @@ import 'presentation/pages/dashboard.dart';
 import 'presentation/pages/login_page.dart';
 import 'presentation/pages/notificacoes_page.dart';
 import 'presentation/pages/produto_page.dart';
-import 'presentation/pages/progresso_page.dart'; // Add this import
+import 'presentation/pages/progresso_page.dart';
 import 'presentation/pages/register_page.dart';
 import 'presentation/pages/solicitacao_page.dart';
 import 'presentation/pages/usuario_page.dart';
-import 'models/usuario_model.dart'; // Make sure to import Usuario model
+import 'models/usuario_model.dart';
 
 void main() async {
   // Inicialize o FFI para o SQLite

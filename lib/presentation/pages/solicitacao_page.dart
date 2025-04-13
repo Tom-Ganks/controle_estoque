@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../core/database_helper.dart';
 import '../../models/produto_model.dart';
 import '../../models/usuario_model.dart';
 import '../../models/notificacoes_model.dart';
+import '../../repositories/notificacao_repository.dart';
 import '../../repositories/produto_repository.dart';
 import 'dashboard.dart';
 
@@ -21,7 +21,9 @@ class SolicitacaoPage extends StatefulWidget {
 class _SolicitacaoPageState extends State<SolicitacaoPage> {
   List<Produto> produtos = [];
   String searchQuery = "";
-  final DatabaseHelper _databaseHelper = DatabaseHelper();
+  final NotificacoesRepository _notificacoesRepository =
+      NotificacoesRepository();
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -30,14 +32,26 @@ class _SolicitacaoPageState extends State<SolicitacaoPage> {
   }
 
   Future<void> _fetchProdutos() async {
-    final produtosList = await ProdutoRepository().fetchAll();
-    produtosList.sort((a, b) => a.nome.compareTo(b.nome));
+    setState(() => isLoading = true);
+    try {
+      final produtosList = await ProdutoRepository().fetchAll();
+      produtosList.sort((a, b) => a.nome.compareTo(b.nome));
 
-    if (!mounted) return;
-
-    setState(() {
-      produtos = produtosList;
-    });
+      setState(() {
+        produtos = produtosList;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() => isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao carregar produtos: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _solicitarProduto(Produto produto) async {
@@ -64,7 +78,7 @@ class _SolicitacaoPageState extends State<SolicitacaoPage> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withValues(alpha: 0.1),
+                    color: Colors.blue.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -138,14 +152,14 @@ class _SolicitacaoPageState extends State<SolicitacaoPage> {
       // Create and save notification
       final notificacao = Notificacao(
         solicitanteNome: widget.currentUser.nome,
-        solicitanteCargo: widget.currentUser.cargo,
+        solicitanteCargo: widget.currentUser.cargo.toString(),
         produtoNome: produto.nome,
         quantidade: quantidade,
         dataSolicitacao: DateTime.now(),
       );
 
       try {
-        await _databaseHelper.insertNotificacao(notificacao);
+        await _notificacoesRepository.insert(notificacao);
 
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -197,8 +211,7 @@ class _SolicitacaoPageState extends State<SolicitacaoPage> {
                 child: Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.arrow_back,
-                          color: Color.fromARGB(255, 39, 37, 37)),
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
                       onPressed: () {
                         Navigator.pushReplacement(
                           context,
@@ -244,7 +257,7 @@ class _SolicitacaoPageState extends State<SolicitacaoPage> {
                                 const Icon(Icons.search, color: Colors.blue),
                             hintText: 'Procurar produtos...',
                             filled: true,
-                            fillColor: Colors.blue.withValues(alpha: 0.1),
+                            fillColor: Colors.blue.withOpacity(0.1),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(15),
                               borderSide: BorderSide.none,
@@ -262,79 +275,85 @@ class _SolicitacaoPageState extends State<SolicitacaoPage> {
                         ),
                       ),
                       Expanded(
-                        child: ListView.builder(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: produtos.length,
-                          itemBuilder: (context, index) {
-                            final produto = produtos[index];
-                            if (!produto.nome
-                                .toLowerCase()
-                                .contains(searchQuery)) {
-                              return Container();
-                            }
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 12),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(15),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.05),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
+                        child: isLoading
+                            ? const Center(child: CircularProgressIndicator())
+                            : ListView.builder(
+                                padding: const EdgeInsets.all(16),
+                                itemCount: produtos.length,
+                                itemBuilder: (context, index) {
+                                  final produto = produtos[index];
+                                  if (!produto.nome
+                                      .toLowerCase()
+                                      .contains(searchQuery)) {
+                                    return Container();
+                                  }
+                                  return Container(
+                                    margin: const EdgeInsets.only(bottom: 12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(15),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.05),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: ListTile(
+                                      contentPadding: const EdgeInsets.all(16),
+                                      leading: Container(
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: Colors.blue.withOpacity(0.1),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                        child: const Icon(
+                                          Icons.inventory,
+                                          color: Colors.blue,
+                                        ),
+                                      ),
+                                      title: Text(
+                                        produto.nome,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      subtitle: Padding(
+                                        padding: const EdgeInsets.only(top: 8),
+                                        child: Text(
+                                          'Saldo: ${produto.saldo}',
+                                          style: TextStyle(
+                                            color: Colors.grey[600],
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ),
+                                      trailing: ElevatedButton.icon(
+                                        icon:
+                                            const Icon(Icons.add_shopping_cart),
+                                        label: const Text('Solicitar'),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.orange,
+                                          foregroundColor: Colors.white,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 12,
+                                          ),
+                                        ),
+                                        onPressed: () =>
+                                            _solicitarProduto(produto),
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
-                              child: ListTile(
-                                contentPadding: const EdgeInsets.all(16),
-                                leading: Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.blue.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: const Icon(
-                                    Icons.inventory,
-                                    color: Colors.blue,
-                                  ),
-                                ),
-                                title: Text(
-                                  produto.nome,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                subtitle: Padding(
-                                  padding: const EdgeInsets.only(top: 8),
-                                  child: Text(
-                                    'Saldo: ${produto.saldo}',
-                                    style: TextStyle(
-                                      color: Colors.grey[600],
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ),
-                                trailing: ElevatedButton.icon(
-                                  icon: const Icon(Icons.add_shopping_cart),
-                                  label: const Text('Solicitar'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.orange,
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 12,
-                                    ),
-                                  ),
-                                  onPressed: () => _solicitarProduto(produto),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
                       ),
                     ],
                   ),

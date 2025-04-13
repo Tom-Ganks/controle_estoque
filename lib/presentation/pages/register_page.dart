@@ -1,8 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Import for TextInputFormatter
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
-
 import '../../models/usuario_model.dart';
 import '../../repositories/usuario_repository.dart';
 import 'login_page.dart';
@@ -15,70 +14,88 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
+  final _formKey = GlobalKey<FormState>();
   final TextEditingController nomeController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController telefoneController = TextEditingController();
   final TextEditingController enderecoController = TextEditingController();
-  final TextEditingController cargoController = TextEditingController();
   final TextEditingController senhaController = TextEditingController();
   final TextEditingController confirmasenhaController = TextEditingController();
-  final TextEditingController cpfController =
-      TextEditingController(); // Add CPF controller
+  final TextEditingController cpfController = TextEditingController();
 
+  int selectedCargo = 1; // Default to Staff (1), Admin is 2
   File? _foto;
-  final _formKey = GlobalKey<FormState>();
 
   Future<void> _selecionarFoto() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    try {
+      final picker = ImagePicker();
+      final XFile? pickedFile = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 85,
+      );
 
-    if (pickedFile != null) {
-      setState(() {
-        _foto = File(pickedFile.path);
-      });
+      if (pickedFile != null) {
+        setState(() {
+          _foto = File(pickedFile.path);
+        });
+      }
+    } catch (e) {
+      debugPrint('Error picking image: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Erro ao selecionar imagem'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
   Future<void> registerUsuario() async {
     if (_formKey.currentState?.validate() ?? false) {
-      final usuario = Usuario(
-        nome: nomeController.text,
-        email: emailController.text,
-        telefone: telefoneController.text,
-        endereco: enderecoController.text,
-        cargo: cargoController.text,
-        senha: senhaController.text,
-        foto: _foto?.path,
-        cpf: cpfController.text, // Add CPF to the Usuario model
-        // Adicionando o campo de nível de acesso
-        status: cargoController.text.toLowerCase() == 'administração'
-            ? 'admin'
-            : 'user',
-      );
-
       try {
+        final usuario = Usuario(
+          nome: nomeController.text,
+          email: emailController.text,
+          telefone: telefoneController.text,
+          endereco: enderecoController.text,
+          cargo: selectedCargo,
+          senha: senhaController.text,
+          status: selectedCargo == 2 ? 'admin' : 'user',
+          cpf: cpfController.text.replaceAll(RegExp(r'[^\d]'), ''),
+        );
+
+        if (_foto != null) {
+          // Handle photo upload here
+          // You might want to save it to a specific directory and store the path
+          final String photoPath = _foto!.path;
+          // Update the usuario model with the photo path
+          usuario.foto = photoPath;
+        }
+
         await UsuarioRepository().insert(usuario);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Usuário registrado com sucesso!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const LoginPage()),
-          );
-        }
+
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Usuário registrado com sucesso!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+        );
       } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Erro ao registrar usuário: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao registrar usuário: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }
@@ -145,7 +162,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
+                          color: Colors.black.withOpacity(0.1),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -170,74 +187,59 @@ class _RegisterPageState extends State<RegisterPage> {
                           label: 'Telefone',
                           icon: Icons.phone,
                           keyboardType: TextInputType.phone,
-                          inputFormatters: [
-                            FilteringTextInputFormatter
-                                .digitsOnly, // Allow only digits
-                            LengthLimitingTextInputFormatter(
-                                11), // Limit to 11 digits
-                            _TelefoneInputFormatter(), // Custom formatter for phone number
-                          ],
+                          inputFormatters: [_TelefoneInputFormatter()],
                         ),
                         _buildTextField(
-                          controller: cpfController, // Add CPF field
+                          controller: cpfController,
                           label: 'CPF',
                           icon: Icons.credit_card,
                           keyboardType: TextInputType.number,
-                          inputFormatters: [
-                            FilteringTextInputFormatter
-                                .digitsOnly, // Allow only digits
-                            LengthLimitingTextInputFormatter(
-                                11), // Limit to 11 digits
-                            _CpfInputFormatter(), // Custom formatter for CPF
-                          ],
+                          inputFormatters: [_CpfInputFormatter()],
                         ),
                         _buildTextField(
                           controller: enderecoController,
                           label: 'Endereço',
                           icon: Icons.location_on,
                         ),
-                        DropdownButtonFormField<String>(
-                          value: cargoController.text.isEmpty
-                              ? null
-                              : cargoController.text,
-                          decoration: InputDecoration(
-                            labelText: 'Cargo',
-                            prefixIcon:
-                                const Icon(Icons.work, color: Colors.blue),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.grey[300]!),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: DropdownButtonFormField<int>(
+                            value: selectedCargo,
+                            decoration: InputDecoration(
+                              labelText: 'Cargo',
+                              prefixIcon:
+                                  const Icon(Icons.work, color: Colors.blue),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide:
+                                    BorderSide(color: Colors.grey[300]!),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                    color: Colors.blue, width: 2),
+                              ),
+                              filled: true,
+                              fillColor: Colors.grey[50],
                             ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.grey[300]!),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
-                                  color: Colors.blue, width: 2),
-                            ),
-                            filled: true,
-                            fillColor: Colors.grey[50],
+                            items: const [
+                              DropdownMenuItem(value: 1, child: Text('Staff')),
+                              DropdownMenuItem(
+                                  value: 2, child: Text('Administrador')),
+                              DropdownMenuItem(
+                                  value: 3, child: Text('Instrutor(a)')),
+                            ],
+                            onChanged: (value) {
+                              if (value != null) {
+                                setState(() {
+                                  selectedCargo = value;
+                                });
+                              }
+                            },
                           ),
-                          items: const [
-                            DropdownMenuItem(
-                                value: 'Administração',
-                                child: Text('Administração')),
-                            DropdownMenuItem(
-                                value: 'Staff', child: Text('Staff')),
-                          ],
-                          onChanged: (value) {
-                            if (value != null) {
-                              cargoController.text = value;
-                            }
-                          },
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Por favor, selecione um cargo';
-                            }
-                            return null;
-                          },
                         ),
                         _buildTextField(
                           controller: senhaController,
@@ -314,7 +316,7 @@ class _RegisterPageState extends State<RegisterPage> {
     TextInputType keyboardType = TextInputType.text,
     bool obscureText = false,
     String? Function(String?)? validator,
-    List<TextInputFormatter>? inputFormatters, // Add inputFormatters parameter
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -322,7 +324,7 @@ class _RegisterPageState extends State<RegisterPage> {
         controller: controller,
         keyboardType: keyboardType,
         obscureText: obscureText,
-        inputFormatters: inputFormatters, // Pass inputFormatters
+        inputFormatters: inputFormatters,
         decoration: InputDecoration(
           labelText: label,
           prefixIcon: Icon(icon, color: Colors.blue),
@@ -353,38 +355,31 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 }
 
-// Custom formatter for phone number
 class _TelefoneInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
-    // Remove all non-digit characters
     String text = newValue.text.replaceAll(RegExp(r'[^\d]'), '');
 
-    // Limit to max 11 digits
     if (text.length > 11) {
       text = text.substring(0, 11);
     }
 
     String formattedText = '';
 
-    // Format: (XX) XXXXX-XXXX or (XX) XXXX-XXXX
     if (text.isNotEmpty) {
-      // Add area code
       formattedText = '(${text.substring(0, text.length.clamp(0, 2))}';
 
       if (text.length > 2) {
         formattedText += ') ';
 
-        // Add first part of the number
         if (text.length <= 6) {
           formattedText += text.substring(2);
         } else {
           formattedText += text.substring(2, 6);
 
-          // Add hyphen and remaining digits
           if (text.length > 6) {
             formattedText += '-';
             formattedText += text.substring(6);
@@ -406,19 +401,15 @@ class _CpfInputFormatter extends TextInputFormatter {
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
-    // Remove all non-digit characters
     String text = newValue.text.replaceAll(RegExp(r'[^\d]'), '');
 
-    // Limit to 11 digits
     if (text.length > 11) {
       text = text.substring(0, 11);
     }
 
     String formattedText = '';
 
-    // Format: XXX.XXX.XXX-XX
     if (text.isNotEmpty) {
-      // First group
       formattedText = text.substring(0, text.length.clamp(0, 3));
 
       if (text.length > 3) {

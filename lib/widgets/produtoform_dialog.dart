@@ -19,7 +19,7 @@ class _ProdutoFormDialogState extends State<ProdutoFormDialog> {
   final TextEditingController _saidaController = TextEditingController();
   final TextEditingController _saldoController = TextEditingController();
   final TextEditingController _codigoController = TextEditingController();
-  final TextEditingController _dataEntradaController = TextEditingController();
+  DateTime? _dataEntrada;
 
   @override
   void initState() {
@@ -32,7 +32,21 @@ class _ProdutoFormDialogState extends State<ProdutoFormDialog> {
       _saidaController.text = widget.produto!.saida.toString();
       _saldoController.text = widget.produto!.saldo.toString();
       _codigoController.text = widget.produto!.codigo ?? '';
-      _dataEntradaController.text = widget.produto!.dataEntrada ?? '';
+      _dataEntrada = widget.produto!.dataEntrada;
+    }
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _dataEntrada ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null && picked != _dataEntrada) {
+      setState(() {
+        _dataEntrada = picked;
+      });
     }
   }
 
@@ -77,24 +91,48 @@ class _ProdutoFormDialogState extends State<ProdutoFormDialog> {
                 controller: _entradaController,
                 decoration: const InputDecoration(labelText: 'Entrada'),
                 keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Insira a quantidade de entrada';
+                  }
+                  return null;
+                },
               ),
               TextFormField(
                 controller: _saidaController,
                 decoration: const InputDecoration(labelText: 'Saída'),
                 keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Insira a quantidade de saída';
+                  }
+                  return null;
+                },
               ),
               TextFormField(
                 controller: _saldoController,
                 decoration: const InputDecoration(labelText: 'Saldo'),
                 keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Insira o saldo';
+                  }
+                  return null;
+                },
               ),
               TextFormField(
                 controller: _codigoController,
                 decoration: const InputDecoration(labelText: 'Código'),
               ),
-              TextFormField(
-                controller: _dataEntradaController,
-                decoration: const InputDecoration(labelText: 'Data de Entrada'),
+              ListTile(
+                title: const Text('Data de Entrada'),
+                subtitle: Text(
+                  _dataEntrada != null
+                      ? '${_dataEntrada!.day}/${_dataEntrada!.month}/${_dataEntrada!.year}'
+                      : 'Selecione uma data',
+                ),
+                trailing: const Icon(Icons.calendar_today),
+                onTap: () => _selectDate(context),
               ),
             ],
           ),
@@ -117,7 +155,7 @@ class _ProdutoFormDialogState extends State<ProdutoFormDialog> {
                 saida: int.tryParse(_saidaController.text) ?? 0,
                 saldo: int.tryParse(_saldoController.text) ?? 0,
                 codigo: _codigoController.text,
-                dataEntrada: _dataEntradaController.text,
+                dataEntrada: _dataEntrada,
               );
               Navigator.of(context).pop(produto);
             }

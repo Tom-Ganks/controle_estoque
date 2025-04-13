@@ -7,7 +7,7 @@ class Produto {
   int saida;
   int saldo;
   String? codigo;
-  String? dataEntrada;
+  DateTime? dataEntrada;
 
   Produto({
     this.idProdutos,
@@ -21,7 +21,6 @@ class Produto {
     this.dataEntrada,
   });
 
-  // Converte um Produto para um Map (útil para inserir no banco de dados)
   Map<String, dynamic> toMap() {
     return {
       'idProdutos': idProdutos,
@@ -32,11 +31,10 @@ class Produto {
       'saida': saida,
       'saldo': saldo,
       'codigo': codigo,
-      'dataEntrada': dataEntrada,
+      'dataEntrada': dataEntrada?.toIso8601String(),
     };
   }
 
-  // Converte um Map para um Produto (útil para ler do banco de dados)
   factory Produto.fromMap(Map<String, dynamic> map) {
     return Produto(
       idProdutos: map['idProdutos'],
@@ -47,7 +45,9 @@ class Produto {
       saida: map['saida'],
       saldo: map['saldo'],
       codigo: map['codigo'],
-      dataEntrada: map['dataEntrada'],
+      dataEntrada: map['dataEntrada'] != null
+          ? DateTime.parse(map['dataEntrada'])
+          : null,
     );
   }
 }

@@ -45,7 +45,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
       setState(() {
         produtos = produtosList;
-        _applyFilters(); // Apply filters after fetching
+        _applyFilters();
         totalProdutos = produtosList.length;
         produtosEmFalta = produtosList.where((p) => p.saldo <= 0).length;
         produtosAcabando =
@@ -131,6 +131,7 @@ class _DashboardPageState extends State<DashboardPage> {
         title: const Text('Painel de Controle'),
         centerTitle: true,
         backgroundColor: Colors.blue,
+        automaticallyImplyLeading: false, // This removes the back button
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -217,7 +218,6 @@ class _DashboardPageState extends State<DashboardPage> {
                           ),
                         ],
                       ),
-                      // Rest of the code remains unchanged...
                       const SizedBox(height: 24),
                       const Center(
                         child: Text(
@@ -232,7 +232,8 @@ class _DashboardPageState extends State<DashboardPage> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            if (widget.currentUser.status == 'admin') ...[
+                            // Show admin options only for admin users (cargo = 2)
+                            if (widget.currentUser.cargo == 2) ...[
                               AnimatedActionCard(
                                 icon: Icons.inventory,
                                 label: 'Gerenciar\nEstoque',
@@ -266,20 +267,21 @@ class _DashboardPageState extends State<DashboardPage> {
                                   ).then((_) => _refreshData());
                                 },
                               ),
-                            ] else ...[
-                              AnimatedActionCard(
-                                icon: Icons.track_changes,
-                                label: 'Progresso',
-                                color: Colors.blue,
-                                onTap: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    '/progresso',
-                                    arguments: widget.currentUser,
-                                  ).then((_) => _refreshData());
-                                },
-                              ),
                             ],
+                            // Show progress page for everyone
+                            AnimatedActionCard(
+                              icon: Icons.track_changes,
+                              label: 'Progresso',
+                              color: Colors.blue,
+                              onTap: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  '/progresso',
+                                  arguments: widget.currentUser,
+                                ).then((_) => _refreshData());
+                              },
+                            ),
+                            // Show solicitations for everyone
                             AnimatedActionCard(
                               icon: Icons.shopping_cart,
                               label: 'Solicitações',

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/usuario_model.dart';
 import '../../repositories/usuario_repository.dart';
-
 import 'dashboard.dart';
 import 'register_page.dart';
 
@@ -44,9 +43,10 @@ class _LoginPageState extends State<LoginPage> {
             email: '',
             telefone: '',
             endereco: '',
-            cargo: '',
+            cargo: 0,
             senha: '',
             status: '',
+            cpf: '',
           ),
         );
 
@@ -97,9 +97,10 @@ class _LoginPageState extends State<LoginPage> {
           email: '',
           telefone: '',
           endereco: '',
-          cargo: '',
+          cargo: 0,
           senha: '',
           status: '',
+          cpf: '',
         ),
       );
 
@@ -165,7 +166,7 @@ class _LoginPageState extends State<LoginPage> {
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
+                          color: Colors.black.withOpacity(0.1),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -212,7 +213,6 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                           obscureText: true,
                           onChanged: (_) => _checkUserAccess(),
-                          onSubmitted: (_) => login(),
                         ),
                         const SizedBox(height: 24),
                         SizedBox(

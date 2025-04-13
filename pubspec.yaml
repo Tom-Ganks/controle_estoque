@@ -1,4 +1,4 @@
-name: controle_estoque
+name: inventory_app
 description: Controle de Estoque App
 publish_to: 'none'
 
