@@ -36,18 +36,27 @@ class Produto {
   }
 
   factory Produto.fromMap(Map<String, dynamic> map) {
+    DateTime? parsedDate;
+    try {
+      if (map['dataEntrada'] != null &&
+          map['dataEntrada'].toString().isNotEmpty) {
+        parsedDate = DateTime.parse(map['dataEntrada']);
+      }
+    } catch (e) {
+      print("Erro ao converter dataEntrada: ${map['dataEntrada']}");
+      parsedDate = null;
+    }
+
     return Produto(
       idProdutos: map['idProdutos'],
-      nome: map['nome'],
-      medida: map['medida'],
+      nome: map['nome'] ?? '',
+      medida: map['medida'] ?? 0,
       local: map['local'],
-      entrada: map['entrada'],
-      saida: map['saida'],
-      saldo: map['saldo'],
+      entrada: map['entrada'] ?? 0,
+      saida: map['saida'] ?? 0,
+      saldo: map['saldo'] ?? 0,
       codigo: map['codigo'],
-      dataEntrada: map['dataEntrada'] != null
-          ? DateTime.parse(map['dataEntrada'])
-          : null,
+      dataEntrada: parsedDate,
     );
   }
 }

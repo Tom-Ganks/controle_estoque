@@ -36,15 +36,12 @@ class ProdutoViewModel with ChangeNotifier {
     try {
       _isLoading = true;
       notifyListeners();
-
       _produtos = await _produtoRepository.fetchAll();
-
       _isLoading = false;
       notifyListeners();
     } catch (e) {
       _isLoading = false;
       notifyListeners();
-      rethrow;
     }
   }
 

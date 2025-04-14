@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../models/cargo_model.dart';
-
 import '../../repositories/cargo_repository.dart';
 import '../../repositories/usuario_repository.dart';
 import '../../widgets/confirmation_dialog.dart';

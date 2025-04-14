@@ -1,5 +1,7 @@
+import 'package:flutter/material.dart';
+
 class Notificacao {
-  int? id;
+  int? idNotificacao; // Changed from id to idNotificacao
   String solicitanteNome;
   String solicitanteCargo;
   String produtoNome;
@@ -8,10 +10,11 @@ class Notificacao {
   bool lida;
   int? idMovimentacao;
   String? observacao;
-  String status; // Adicionado campo status
+  String status;
+  int? quantidadeAprovada;
 
   Notificacao({
-    this.id,
+    this.idNotificacao, // Changed from id to idNotificacao
     required this.solicitanteNome,
     required this.solicitanteCargo,
     required this.produtoNome,
@@ -20,13 +23,13 @@ class Notificacao {
     this.lida = false,
     this.idMovimentacao,
     this.observacao,
-    this.status =
-        'pendente', // Valores possíveis: pendente, aprovado, parcial, recusado
+    this.status = 'pendente',
+    this.quantidadeAprovada,
   });
 
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
+      'idNotificacao': idNotificacao, // Changed from id to idNotificacao
       'solicitante_nome': solicitanteNome,
       'solicitante_cargo': solicitanteCargo,
       'produto_nome': produtoNome,
@@ -36,12 +39,13 @@ class Notificacao {
       'idMovimentacao': idMovimentacao,
       'observacao': observacao,
       'status': status,
+      'quantidade_aprovada': quantidadeAprovada,
     };
   }
 
   factory Notificacao.fromMap(Map<String, dynamic> map) {
     return Notificacao(
-      id: map['id'],
+      idNotificacao: map['idNotificacao'], // Changed from id to idNotificacao
       solicitanteNome: map['solicitante_nome'],
       solicitanteCargo: map['solicitante_cargo'],
       produtoNome: map['produto_nome'],
@@ -51,6 +55,33 @@ class Notificacao {
       idMovimentacao: map['idMovimentacao'],
       observacao: map['observacao'],
       status: map['status'] ?? 'pendente',
+      quantidadeAprovada: map['quantidade_aprovada'],
     );
+  }
+
+  String getStatusDisplay() {
+    switch (status) {
+      case 'aprovado':
+        return 'APROVADO';
+      case 'parcial':
+        return 'APROVADO PARCIALMENTE';
+      case 'recusado':
+        return 'RECUSADO';
+      default:
+        return 'PENDENTE';
+    }
+  }
+
+  Color getStatusColor() {
+    switch (status) {
+      case 'aprovado':
+        return Colors.green;
+      case 'parcial':
+        return Colors.orange;
+      case 'recusado':
+        return Colors.red;
+      default:
+        return Colors.blue;
+    }
   }
 }

@@ -40,32 +40,35 @@ class NotificacoesRepository {
     return List.generate(maps.length, (i) => Notificacao.fromMap(maps[i]));
   }
 
-  Future<int> markAsRead(int id) async {
+  Future<int> updateStatus(
+    int idNotificacao, {
+    // Changed from id to idNotificacao
+    required String status,
+    String? observacao,
+    int? quantidadeAprovada,
+  }) async {
+    final db = await _databaseHelper.database;
+    return await db.update(
+      'notificacoes',
+      {
+        'status': status,
+        'observacao': observacao,
+        'quantidade_aprovada': quantidadeAprovada,
+        'lida': 1,
+      },
+      where: 'idNotificacao = ?', // Changed from id to idNotificacao
+      whereArgs: [idNotificacao],
+    );
+  }
+
+  Future<int> markAsRead(int idNotificacao) async {
+    // Changed from id to idNotificacao
     final db = await _databaseHelper.database;
     return await db.update(
       'notificacoes',
       {'lida': 1},
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-  }
-
-  Future<int> markAllAsRead() async {
-    final db = await _databaseHelper.database;
-    return await db.update(
-      'notificacoes',
-      {'lida': 1},
-      where: 'lida = ?',
-      whereArgs: [0],
-    );
-  }
-
-  Future<int> delete(int id) async {
-    final db = await _databaseHelper.database;
-    return await db.delete(
-      'notificacoes',
-      where: 'id = ?',
-      whereArgs: [id],
+      where: 'idNotificacao = ?', // Changed from id to idNotificacao
+      whereArgs: [idNotificacao],
     );
   }
 
@@ -80,16 +83,5 @@ class NotificacoesRepository {
       'SELECT COUNT(*) as count FROM notificacoes WHERE lida = 0',
     );
     return result.first['count'] as int;
-  }
-
-  Future<List<Notificacao>> fetchByMovimentacao(int idMovimentacao) async {
-    final db = await _databaseHelper.database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'notificacoes',
-      where: 'idMovimentacao = ?',
-      whereArgs: [idMovimentacao],
-      orderBy: 'data_solicitacao DESC',
-    );
-    return List.generate(maps.length, (i) => Notificacao.fromMap(maps[i]));
   }
 }

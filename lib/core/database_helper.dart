@@ -16,43 +16,14 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDatabase() async {
-    /// Delete existing database to start fresh
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, 'controle_estoque_new.db');
 
-    // Uncomment to delete old database (only for first run)
-    // await deleteDatabase(path);
-
     return await openDatabase(
       path,
-      version: 1, // Start fresh with version 1
+      version: 1,
       onCreate: _onCreate,
     );
-  }
-
-  Future<int> insertMedida(Map<String, dynamic> medida) async {
-    final db = await database;
-    return await db.insert('medida', medida);
-  }
-
-  // In your main function or a setup screen:
-  Future<void> insertInitialMedidaData() async {
-    final dbHelper = DatabaseHelper();
-    final db = await dbHelper.database; // Ensure database is initialized
-
-    // Check if medida table is empty before inserting
-    List<Map<String, dynamic>> existingMedidas = await db.query('medida');
-    if (existingMedidas.isEmpty) {
-      await dbHelper.insertMedida(
-          {'medida': 'Unidade', 'descricao': 'Quantidade em unidades'});
-      await dbHelper.insertMedida(
-          {'medida': 'Caixa', 'descricao': 'Quantidade em caixas'});
-      await dbHelper.insertMedida(
-          {'medida': 'Litro', 'descricao': 'Quantidade em litros'});
-      print('Initial medida data inserted.');
-    } else {
-      print('Medida table already has data.');
-    }
   }
 
   Future<void> _onCreate(Database db, int version) async {
@@ -159,70 +130,36 @@ class DatabaseHelper {
         data_solicitacao TEXT NOT NULL,
         lida INTEGER DEFAULT 0,
         idMovimentacao INTEGER,
+        observacao TEXT,
+        status TEXT DEFAULT 'pendente',
+        quantidade_aprovada INTEGER,
         FOREIGN KEY (idMovimentacao) REFERENCES movimentacao(idMovimentacao) ON DELETE SET NULL
       )
     ''');
   }
 
-  // ================ USUARIOS CRUD ================
-  Future<int> insertUsuario(Map<String, dynamic> usuario) async {
+  Future<int> insertMedida(Map<String, dynamic> medida) async {
     final db = await database;
-    return await db.insert('usuarios', _mapUsuarioData(usuario));
+    return await db.insert('medida', medida);
   }
 
-  Future<List<Map<String, dynamic>>> getUsuarios() async {
-    final db = await database;
-    return await db.query('usuarios');
-  }
+  Future<void> insertInitialMedidaData() async {
+    final dbHelper = DatabaseHelper();
+    final db = await dbHelper.database;
 
-  Future<Map<String, dynamic>?> getUsuario(int id) async {
-    final db = await database;
-    final result = await db.query(
-      'usuarios',
-      where: 'idUsuarios = ?',
-      whereArgs: [id],
-      limit: 1,
-    );
-    return result.isNotEmpty ? result.first : null;
+    List<Map<String, dynamic>> existingMedidas = await db.query('medida');
+    if (existingMedidas.isEmpty) {
+      await dbHelper.insertMedida(
+          {'medida': 'Unidade', 'descricao': 'Quantidade em unidades'});
+      await dbHelper.insertMedida(
+          {'medida': 'Caixa', 'descricao': 'Quantidade em caixas'});
+      await dbHelper.insertMedida(
+          {'medida': 'Litro', 'descricao': 'Quantidade em litros'});
+      print('Initial medida data inserted.');
+    } else {
+      print('Medida table already has data.');
+    }
   }
-
-  Future<int> updateUsuario(Map<String, dynamic> usuario) async {
-    final db = await database;
-    return await db.update(
-      'usuarios',
-      _mapUsuarioData(usuario),
-      where: 'idUsuarios = ?',
-      whereArgs: [usuario['idUsuarios']],
-    );
-  }
-
-  Future<int> deleteUsuario(int id) async {
-    final db = await database;
-    return await db.delete(
-      'usuarios',
-      where: 'idUsuarios = ?',
-      whereArgs: [id],
-    );
-  }
-
-  Map<String, dynamic> _mapUsuarioData(Map<String, dynamic> data) {
-    return {
-      'nome': data['nome'],
-      'telefone': data['telefone'],
-      'email': data['email'],
-      'endereco': data['endereco'],
-      'cargo': data['cargo'],
-      'senha': data['senha'],
-      'status': data['status'] ?? 'ativo',
-      'turma': data['turma'],
-      'cpf': data['cpf'],
-      'foto': data['foto'],
-      'dataNascimento': data['dataNascimento'],
-    };
-  }
-
-  // ================ OTHER CRUD OPERATIONS ================
-  // Add similar methods for other tables following the same pattern
 
   Future<void> close() async {
     final db = await database;

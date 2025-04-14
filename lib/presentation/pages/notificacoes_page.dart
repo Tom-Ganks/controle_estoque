@@ -68,7 +68,8 @@ class _NotificacoesPageState extends State<NotificacoesPage> {
   }
 
   Future<void> _markAsRead(Notificacao notificacao) async {
-    final success = await _viewModel.markAsRead(notificacao.id!);
+    final success = await _viewModel.markAsRead(
+        notificacao.idNotificacao!); // Changed from id to idNotificacao
     if (success) {
       await _loadNotificacoes();
     } else {
