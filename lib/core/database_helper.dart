@@ -16,7 +16,7 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDatabase() async {
-    // Delete existing database to start fresh
+    /// Delete existing database to start fresh
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, 'controle_estoque_new.db');
 
