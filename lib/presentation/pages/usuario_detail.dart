@@ -470,13 +470,6 @@ class UsuarioDetailPageState extends State<UsuarioDetailPage> {
         title: const Text('Perfil do Usuário'),
         backgroundColor: Colors.blue,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.delete, color: Colors.white),
-            onPressed: _deleteUsuario,
-            tooltip: 'Excluir usuário',
-          ),
-        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
