@@ -14,6 +14,7 @@ class ProdutoPage extends StatefulWidget {
 class _ProdutoPageState extends State<ProdutoPage> {
   List<Produto> produtos = [];
   String searchQuery = "";
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -22,14 +23,23 @@ class _ProdutoPageState extends State<ProdutoPage> {
   }
 
   Future<void> _fetchProdutos() async {
-    final produtosList = await ProdutoRepository().fetchAll();
-    produtosList.sort((a, b) => a.nome.compareTo(b.nome));
+    setState(() => isLoading = true);
+    try {
+      final produtosList = await ProdutoRepository().fetchAll();
+      produtosList.sort((a, b) => a.nome.compareTo(b.nome));
 
-    if (!mounted) return;
-
-    setState(() {
-      produtos = produtosList;
-    });
+      setState(() {
+        produtos = produtosList;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() => isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao carregar produtos: $e')),
+        );
+      }
+    }
   }
 
   Future<void> _addProduto() async {
@@ -41,24 +51,24 @@ class _ProdutoPageState extends State<ProdutoPage> {
     if (result != null && result is Produto) {
       try {
         await ProdutoRepository().insert(result);
-        if (!mounted) return;
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Produto adicionado com sucesso!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        _fetchProdutos();
+        await _fetchProdutos();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Produto adicionado com sucesso!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
       } catch (e) {
-        if (!mounted) return;
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erro ao adicionar produto: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erro ao adicionar produto: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }
@@ -72,24 +82,24 @@ class _ProdutoPageState extends State<ProdutoPage> {
     if (result != null && result is Produto) {
       try {
         await ProdutoRepository().update(result);
-        if (!mounted) return;
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Produto atualizado com sucesso!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        _fetchProdutos();
+        await _fetchProdutos();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Produto atualizado com sucesso!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
       } catch (e) {
-        if (!mounted) return;
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erro ao atualizar produto: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erro ao atualizar produto: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }
@@ -104,24 +114,24 @@ class _ProdutoPageState extends State<ProdutoPage> {
     if (confirm) {
       try {
         await ProdutoRepository().delete(id);
-        if (!mounted) return;
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Produto excluído com sucesso!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        _fetchProdutos();
+        await _fetchProdutos();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Produto excluído com sucesso!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
       } catch (e) {
-        if (!mounted) return;
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erro ao excluir produto: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erro ao excluir produto: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }
@@ -129,149 +139,213 @@ class _ProdutoPageState extends State<ProdutoPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Produtos',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.blue,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: _addProduto,
-          ),
-        ],
-      ),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Colors.blue.withValues(alpha: 0.1), Colors.white],
+            colors: [Colors.blue[700]!, Colors.blue[500]!],
           ),
         ),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: TextField(
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.search, color: Colors.blue),
-                  hintText: 'Procurar produtos...',
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: const BorderSide(color: Colors.blue, width: 2),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 16,
-                  ),
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    searchQuery = value.toLowerCase();
-                  });
-                },
-              ),
-            ),
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: produtos.length,
-                itemBuilder: (context, index) {
-                  final produto = produtos[index];
-                  if (!produto.nome.toLowerCase().contains(searchQuery)) {
-                    return Container();
-                  }
-                  return Card(
-                    elevation: 2,
-                    margin: const EdgeInsets.only(bottom: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
+        child: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      onPressed: () => Navigator.pop(context),
                     ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
-                      ),
-                      leading: CircleAvatar(
-                        backgroundColor: Colors.blue.withValues(alpha: 0.1),
-                        child: Text(
-                          produto.nome[0].toUpperCase(),
-                          style: const TextStyle(
-                            color: Colors.blue,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      title: Text(
-                        produto.nome,
-                        style: const TextStyle(
+                    const Expanded(
+                      child: Text(
+                        'Produtos',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          fontSize: 16,
                         ),
+                        textAlign: TextAlign.center,
                       ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.inventory,
-                                size: 16,
-                                color: Colors.grey,
+                    ),
+                    const SizedBox(width: 48),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(30),
+                      topRight: Radius.circular(30),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                decoration: InputDecoration(
+                                  prefixIcon: const Icon(Icons.search,
+                                      color: Colors.blue),
+                                  hintText: 'Procurar produtos...',
+                                  filled: true,
+                                  fillColor: Colors.blue.withOpacity(0.1),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(15),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 16,
+                                  ),
+                                ),
+                                onChanged: (value) {
+                                  setState(
+                                      () => searchQuery = value.toLowerCase());
+                                },
                               ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Saldo: ${produto.saldo}',
-                                style: const TextStyle(
-                                  color: Colors.grey,
+                            ),
+                            const SizedBox(width: 12),
+                            ElevatedButton.icon(
+                              onPressed: _addProduto,
+                              icon: const Icon(Icons.add_box_rounded),
+                              label: const Text('Adicionar'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.orange,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 16,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15),
                                 ),
                               ),
-                            ],
-                          ),
-                        ],
+                            ),
+                          ],
+                        ),
                       ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit),
-                            color: Colors.blue,
-                            onPressed: () => _editProduto(produto),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete),
-                            color: Colors.red,
-                            onPressed: () =>
-                                _deleteProduto(produto.idProdutos!),
-                          ),
-                        ],
+                      Expanded(
+                        child: isLoading
+                            ? const Center(child: CircularProgressIndicator())
+                            : produtos.isEmpty
+                                ? Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.inventory_2_outlined,
+                                          size: 64,
+                                          color: Colors.grey[400],
+                                        ),
+                                        const SizedBox(height: 16),
+                                        Text(
+                                          'Nenhum produto cadastrado',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                : ListView.builder(
+                                    padding: const EdgeInsets.all(16),
+                                    itemCount: produtos.length,
+                                    itemBuilder: (context, index) {
+                                      final produto = produtos[index];
+                                      if (!produto.nome
+                                          .toLowerCase()
+                                          .contains(searchQuery)) {
+                                        return Container();
+                                      }
+                                      return Card(
+                                        elevation: 2,
+                                        margin:
+                                            const EdgeInsets.only(bottom: 12),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(15),
+                                        ),
+                                        child: ListTile(
+                                          contentPadding:
+                                              const EdgeInsets.all(16),
+                                          leading: CircleAvatar(
+                                            backgroundColor:
+                                                Colors.blue.withOpacity(0.1),
+                                            child: Text(
+                                              produto.nome[0].toUpperCase(),
+                                              style: const TextStyle(
+                                                color: Colors.blue,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                          title: Text(
+                                            produto.nome,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                          subtitle: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              const SizedBox(height: 4),
+                                              Row(
+                                                children: [
+                                                  const Icon(
+                                                    Icons.inventory,
+                                                    size: 16,
+                                                    color: Colors.grey,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    'Saldo: ${produto.saldo}',
+                                                    style: const TextStyle(
+                                                      color: Colors.grey,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                          trailing: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              IconButton(
+                                                icon: const Icon(Icons.edit),
+                                                color: Colors.blue,
+                                                onPressed: () =>
+                                                    _editProduto(produto),
+                                              ),
+                                              IconButton(
+                                                icon: const Icon(Icons.delete),
+                                                color: Colors.red,
+                                                onPressed: () => _deleteProduto(
+                                                    produto.idProdutos!),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
                       ),
-                    ),
-                  );
-                },
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _fetchProdutos,
-        backgroundColor: Colors.orange,
-        child: const Icon(Icons.refresh),
       ),
     );
   }

@@ -9,6 +9,18 @@ class ProdutoRepository {
     return await db.insert('produtos', produto.toMap());
   }
 
+  Future<Produto?> fetchByName(String nome) async {
+    final db = await _databaseHelper.database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'produtos',
+      where: 'nome = ?',
+      whereArgs: [nome],
+      limit: 1,
+    );
+    if (maps.isEmpty) return null;
+    return Produto.fromMap(maps.first);
+  }
+
   Future<List<Produto>> fetchAll() async {
     final db = await _databaseHelper.database;
     final List<Map<String, dynamic>> maps = await db.query('produtos');
